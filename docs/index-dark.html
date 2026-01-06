@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="Dynamics of Reinforcement Learning on the Probability Simplex">
-  <meta name="keywords" content="RL, reinforcement learning, probability simplex, Shahshahani, GRPO, KL divergence, phase transition">
+  <meta name="description" content="Rate or Fate? RLVεR: Reinforcement Learning with Verifiable Noisy Rewards - Does noisy reward change the rate of learning or its fate?">
+  <meta name="keywords" content="RLVR, GRPO, reinforcement learning, noisy rewards, LLM, phase transition, Youden index, multi-armed bandit, probability simplex">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simplex Dynamics | RL on the Probability Simplex</title>
+  <title>Rate or Fate? | RLVεR: RL with Verifiable Noisy Rewards</title>
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>△</text></svg>">
@@ -19,7 +19,7 @@
   </script>
   <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-  <!-- Google Fonts - Premium Selection -->
+  <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -32,13 +32,13 @@
 
   <style>
     /* ═══════════════════════════════════════════════════════════
-       ROOT VARIABLES & THEME
+       ROOT VARIABLES & THEME - DARK MODE
        ═══════════════════════════════════════════════════════════ */
     :root {
-      /* Color Palette - Deep Ocean with Coral Accents */
+      /* Color Palette - Deep Ocean with Rich Accents */
       --color-bg: #0a0f1a;
       --color-bg-elevated: #111827;
-      --color-bg-card: rgba(17, 24, 39, 0.7);
+      --color-bg-card: rgba(17, 24, 39, 0.8);
       --color-surface: #1f2937;
       --color-border: rgba(255, 255, 255, 0.08);
       --color-border-hover: rgba(255, 255, 255, 0.15);
@@ -47,16 +47,16 @@
       --color-text-secondary: #9ca3af;
       --color-text-muted: #6b7280;
       
-      /* Accent gradients */
+      /* Accent gradients - Research theme with purple/teal */
       --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
       --gradient-warm: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
       --gradient-cool: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      --gradient-mesh: radial-gradient(at 40% 20%, hsla(228, 95%, 70%, 0.15) 0px, transparent 50%),
-                       radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.1) 0px, transparent 50%),
-                       radial-gradient(at 0% 50%, hsla(355, 100%, 70%, 0.1) 0px, transparent 50%),
-                       radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.1) 0px, transparent 50%),
-                       radial-gradient(at 0% 100%, hsla(269, 100%, 77%, 0.1) 0px, transparent 50%);
+      --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --gradient-mesh: radial-gradient(at 0% 0%, hsla(253, 91%, 75%, 0.15) 0px, transparent 50%),
+                       radial-gradient(at 100% 0%, hsla(339, 90%, 68%, 0.12) 0px, transparent 50%),
+                       radial-gradient(at 100% 100%, hsla(37, 91%, 55%, 0.1) 0px, transparent 50%),
+                       radial-gradient(at 0% 100%, hsla(199, 89%, 48%, 0.1) 0px, transparent 50%);
       
       --color-link: #60a5fa;
       --color-link-hover: #93c5fd;
@@ -67,13 +67,14 @@
       --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
       
       /* Spacing */
-      --section-gap: 6rem;
+      --section-gap: 5rem;
       --content-max: 800px;
       --content-wide: 1100px;
       
       /* Effects */
-      --shadow-glow: 0 0 60px rgba(102, 126, 234, 0.15);
-      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+      --shadow-glow: 0 8px 32px rgba(102, 126, 234, 0.25);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.5);
       --radius-lg: 16px;
       --radius-md: 10px;
     }
@@ -81,13 +82,8 @@
     /* ═══════════════════════════════════════════════════════════
        RESET & BASE
        ═══════════════════════════════════════════════════════════ */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
@@ -98,17 +94,12 @@
       color: var(--color-text);
       background: var(--color-bg);
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Mesh gradient background */
     body::before {
       content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background: var(--gradient-mesh);
       pointer-events: none;
       z-index: -1;
@@ -119,15 +110,8 @@
       text-decoration: none;
       transition: color 0.2s ease;
     }
-
-    a:hover {
-      color: var(--color-link-hover);
-    }
-
-    img {
-      max-width: 100%;
-      height: auto;
-    }
+    a:hover { color: var(--color-link-hover); }
+    img { max-width: 100%; height: auto; }
 
     /* ═══════════════════════════════════════════════════════════
        LAYOUT
@@ -138,22 +122,13 @@
       padding: 0 1.5rem;
     }
 
-    .section {
-      padding: var(--section-gap) 0;
-    }
-
-    .section--hero {
-      padding-top: 4rem;
-      padding-bottom: 3rem;
-    }
+    .section { padding: var(--section-gap) 0; }
+    .section--hero { padding-top: 4rem; padding-bottom: 2rem; }
 
     /* ═══════════════════════════════════════════════════════════
        HERO SECTION
        ═══════════════════════════════════════════════════════════ */
-    .hero {
-      text-align: center;
-      position: relative;
-    }
+    .hero { text-align: center; position: relative; }
 
     .hero__badge {
       display: inline-flex;
@@ -167,7 +142,9 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 1.5rem;
+      color: white;
       animation: float 3s ease-in-out infinite;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
 
     @keyframes float {
@@ -175,32 +152,39 @@
       50% { transform: translateY(-5px); }
     }
 
+    .hero__eyebrow {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
     .hero__title {
       font-family: var(--font-display);
-      font-size: clamp(2.25rem, 6vw, 3.5rem);
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
       font-weight: 600;
-      line-height: 1.15;
+      line-height: 1.2;
       margin: 0 0 1.5rem;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff 0%, #e0e7ff 50%, #c7d2fe 100%);
+      background: linear-gradient(135deg, #f9fafb 0%, #60a5fa 50%, #a78bfa 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
     .hero__subtitle {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       color: var(--color-text-secondary);
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto 2rem;
       font-weight: 300;
+      line-height: 1.7;
     }
 
     /* Authors */
-    .authors {
-      margin-bottom: 0.75rem;
-    }
-
+    .authors { margin-bottom: 0.75rem; }
     .authors__list {
       display: flex;
       flex-wrap: wrap;
@@ -208,25 +192,15 @@
       gap: 0.25rem 1rem;
       font-size: 1.1rem;
     }
-
-    .author {
-      color: var(--color-text);
-    }
-
-    .author sup {
-      color: var(--color-link);
-      font-weight: 600;
-    }
+    .author { color: var(--color-text); }
+    .author sup { color: var(--color-link); font-weight: 600; }
 
     .affiliations {
       font-size: 0.95rem;
       color: var(--color-text-muted);
       margin-bottom: 0.5rem;
     }
-
-    .affiliations sup {
-      color: var(--color-link);
-    }
+    .affiliations sup { color: var(--color-link); }
 
     .contact {
       font-size: 0.9rem;
@@ -250,63 +224,94 @@
       font-family: var(--font-body);
       font-size: 0.9rem;
       font-weight: 500;
-      color: white;
-      background: var(--color-surface);
+      color: var(--color-text);
+      background: var(--color-bg-elevated);
       border: 1px solid var(--color-border);
       border-radius: 50px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
+      box-shadow: var(--shadow-card);
     }
 
     .btn:hover {
-      background: var(--color-bg-elevated);
       border-color: var(--color-border-hover);
-      transform: translateY(-2px);
+      transform: translateY(-3px) scale(1.05);
       box-shadow: var(--shadow-glow);
-      color: white;
+      color: var(--color-text);
     }
 
-    .btn--paper .btn__icon { color: #f87171; }
-    .btn--arxiv .btn__icon { color: #fbbf24; }
-    .btn--github .btn__icon { color: #a78bfa; }
+    .btn:active {
+      transform: translateY(-1px) scale(1.02);
+    }
 
-    .btn__icon {
+    .btn--paper .btn__icon { color: #ef4444; }
+    .btn--arxiv .btn__icon { color: #f59e0b; }
+    .btn--github .btn__icon { color: #60a5fa; }
+    .btn__icon { 
       font-size: 1.1rem;
+      transition: transform 0.3s ease;
     }
+
+    .btn:hover .btn__icon {
+      transform: scale(1.2);
+    }
+
+    /* Subtle pulse animation on buttons */
+    @keyframes subtlePulse {
+      0%, 100% { box-shadow: var(--shadow-card); }
+      50% { box-shadow: 0 6px 30px rgba(102, 126, 234, 0.25); }
+    }
+
+    .btn--paper:hover { animation: subtlePulse 2s ease-in-out infinite; }
+    .btn--arxiv:hover { animation: subtlePulse 2s ease-in-out infinite 0.3s; }
+    .btn--github:hover { animation: subtlePulse 2s ease-in-out infinite 0.6s; }
 
     /* ═══════════════════════════════════════════════════════════
        HERO FIGURE
        ═══════════════════════════════════════════════════════════ */
-    .hero-figure {
-      margin: 3rem 0;
-      position: relative;
-    }
+    .hero-figure { margin: 3rem 0; }
 
     .hero-figure__container {
       position: relative;
-      background: var(--color-bg-card);
-      backdrop-filter: blur(10px);
+      background: var(--color-bg-elevated);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.5rem;
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--shadow-elevated);
       overflow: hidden;
     }
 
     .hero-figure__container::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
     }
 
-    .hero-figure img {
+    .hero-figure img,
+    .hero-figure video,
+    .hero-video {
       width: 100%;
       border-radius: var(--radius-md);
+    }
+    
+    /* Animation figures */
+    .animation-figure {
+      margin: 2rem 0;
+    }
+    
+    .animation-figure video,
+    .animation-figure img {
+      width: 100%;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    
+    .animation-figure--glow video,
+    .animation-figure--glow img {
+      box-shadow: 0 8px 40px rgba(102, 126, 234, 0.3);
     }
 
     .hero-figure figcaption {
@@ -334,29 +339,88 @@
     .abstract::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
       background: var(--gradient-primary);
     }
 
     .abstract p {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       line-height: 1.8;
+      color: var(--color-text-secondary);
     }
 
-    .abstract strong {
-      color: #a78bfa;
+    .abstract strong { color: #60a5fa; font-weight: 600; }
+    .abstract em { color: var(--color-text); font-style: italic; }
+
+    /* ═══════════════════════════════════════════════════════════
+       KEY EQUATION HIGHLIGHT
+       ═══════════════════════════════════════════════════════════ */
+    .key-equation {
+      max-width: 700px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--color-bg-elevated);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+    }
+
+    .key-equation__label {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .key-equation__formula {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .key-equation__explanation {
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* Key equation hover effect */
+    .key-equation {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .key-equation:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 50px rgba(102, 126, 234, 0.3);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .key-equation::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .key-equation:hover::before {
+      opacity: 1;
     }
 
     /* ═══════════════════════════════════════════════════════════
        TAKEAWAYS
        ═══════════════════════════════════════════════════════════ */
-    .takeaways {
-      padding: var(--section-gap) 0;
-    }
+    .takeaways { padding: var(--section-gap) 0; }
 
     .section-header {
       text-align: center;
@@ -368,10 +432,7 @@
       font-size: 2rem;
       font-weight: 500;
       margin: 0;
-      background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--color-text);
     }
 
     .takeaway-grid {
@@ -381,53 +442,62 @@
     }
 
     @media (max-width: 768px) {
-      .takeaway-grid {
-        grid-template-columns: 1fr;
-      }
+      .takeaway-grid { grid-template-columns: 1fr; }
     }
 
     .takeaway-card {
       display: flex;
       gap: 1rem;
       padding: 1.5rem;
-      background: var(--color-bg-card);
-      backdrop-filter: blur(10px);
+      background: var(--color-bg-elevated);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
 
     .takeaway-card::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
+      top: 0; left: 0; right: 0;
+      height: 3px;
       opacity: 0;
       transition: opacity 0.3s ease;
     }
 
-    .takeaway-card:nth-child(1)::before { background: var(--gradient-primary); }
-    .takeaway-card:nth-child(2)::before { background: var(--gradient-accent); }
-    .takeaway-card:nth-child(3)::before { background: var(--gradient-cool); }
-    .takeaway-card:nth-child(4)::before { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(1)::before { background: var(--gradient-success); }
+    .takeaway-card:nth-child(2)::before { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(3)::before { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(4)::before { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(5)::before { background: var(--gradient-primary); }
 
     .takeaway-card:hover {
       border-color: var(--color-border-hover);
-      transform: translateY(-3px);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: var(--shadow-elevated);
     }
 
-    .takeaway-card:hover::before {
-      opacity: 1;
-    }
+    .takeaway-card:hover::before { opacity: 1; }
+
+    /* Colored glow on hover for each card */
+    .takeaway-card:nth-child(1):hover { box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3); }
+    .takeaway-card:nth-child(2):hover { box-shadow: 0 15px 40px rgba(250, 112, 154, 0.3); }
+    .takeaway-card:nth-child(3):hover { box-shadow: 0 15px 40px rgba(240, 147, 251, 0.3); }
+    .takeaway-card:nth-child(4):hover { box-shadow: 0 15px 40px rgba(79, 172, 254, 0.3); }
+    .takeaway-card:nth-child(5):hover { box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3); }
+
+    /* Staggered animation delays */
+    .takeaway-card:nth-child(1) { animation-delay: 0.1s; }
+    .takeaway-card:nth-child(2) { animation-delay: 0.2s; }
+    .takeaway-card:nth-child(3) { animation-delay: 0.3s; }
+    .takeaway-card:nth-child(4) { animation-delay: 0.4s; }
+    .takeaway-card:nth-child(5) { animation-delay: 0.5s; }
 
     .takeaway-number {
       flex-shrink: 0;
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 2.5rem; height: 2.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -436,12 +506,14 @@
       font-weight: 600;
       color: white;
       border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .takeaway-card:nth-child(1) .takeaway-number { background: var(--gradient-primary); }
-    .takeaway-card:nth-child(2) .takeaway-number { background: var(--gradient-accent); }
-    .takeaway-card:nth-child(3) .takeaway-number { background: var(--gradient-cool); }
-    .takeaway-card:nth-child(4) .takeaway-number { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(1) .takeaway-number { background: var(--gradient-success); }
+    .takeaway-card:nth-child(2) .takeaway-number { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(3) .takeaway-number { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(4) .takeaway-number { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(5) .takeaway-number { background: var(--gradient-primary); }
 
     .takeaway-content h3 {
       font-family: var(--font-display);
@@ -459,6 +531,89 @@
     }
 
     /* ═══════════════════════════════════════════════════════════
+       PHASE TRANSITION BOX
+       ═══════════════════════════════════════════════════════════ */
+    .phase-box {
+      max-width: 900px;
+      margin: 3rem auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 700px) {
+      .phase-box { grid-template-columns: 1fr; }
+    }
+
+    .phase-card {
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+      border: 1px solid var(--color-border);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+    }
+
+    .phase-card:hover {
+      transform: translateY(-5px) scale(1.03);
+    }
+
+    .phase-card--learning:hover {
+      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.35);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .phase-card--neutral:hover {
+      box-shadow: 0 15px 40px rgba(250, 112, 154, 0.35);
+      border-color: rgba(250, 112, 154, 0.5);
+    }
+
+    .phase-card--collapse:hover {
+      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.35);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .phase-card--learning {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .phase-card--neutral {
+      background: linear-gradient(135deg, rgba(250, 112, 154, 0.15) 0%, rgba(254, 225, 64, 0.1) 100%);
+      border-color: rgba(250, 112, 154, 0.3);
+    }
+
+    .phase-card--collapse {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .phase-card__condition {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .phase-card--learning .phase-card__condition { color: #34d399; }
+    .phase-card--neutral .phase-card__condition { color: #fbbf24; }
+    .phase-card--collapse .phase-card__condition { color: #f87171; }
+
+    .phase-card__label {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--color-text);
+    }
+
+    .phase-card__desc {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
        CONTENT SECTIONS
        ═══════════════════════════════════════════════════════════ */
     .content-section {
@@ -468,9 +623,7 @@
       border-top: 1px solid var(--color-border);
     }
 
-    .content-section:first-of-type {
-      border-top: none;
-    }
+    .content-section:first-of-type { border-top: none; }
 
     .content-section__title {
       font-family: var(--font-display);
@@ -485,8 +638,7 @@
 
     .content-section__title::before {
       content: '';
-      width: 4px;
-      height: 1.5rem;
+      width: 4px; height: 1.5rem;
       background: var(--gradient-primary);
       border-radius: 2px;
     }
@@ -495,20 +647,41 @@
       margin: 0 0 1.25rem;
       color: var(--color-text-secondary);
     }
+    .content-section p:last-child { margin-bottom: 0; }
 
-    .content-section p:last-child {
-      margin-bottom: 0;
-    }
-
-    /* Equation Block */
+    /* Equation Block - Enhanced */
     .equation {
       margin: 2rem 0;
       padding: 1.5rem 2rem;
-      background: var(--color-bg-elevated);
+      background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       text-align: center;
       overflow-x: auto;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .equation:hover {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border-color: rgba(102, 126, 234, 0.3);
+      transform: scale(1.01);
+    }
+
+    .equation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .equation:hover::before {
+      opacity: 1;
     }
 
     /* Feature List */
@@ -524,40 +697,68 @@
       border-bottom: 1px solid var(--color-border);
       color: var(--color-text-secondary);
     }
-
-    .feature-list li:last-child {
-      border-bottom: none;
-    }
+    .feature-list li:last-child { border-bottom: none; }
 
     .feature-list li::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 1.35rem;
-      width: 8px;
-      height: 8px;
+      left: 0; top: 1.35rem;
+      width: 8px; height: 8px;
       background: var(--gradient-primary);
       border-radius: 50%;
     }
 
-    .feature-list li strong {
-      color: var(--color-text);
-    }
+    .feature-list li strong { color: var(--color-text); }
 
-    /* Figure */
+    /* Figure - Enhanced with hover effects */
     .figure {
       margin: 2rem 0;
-      background: var(--color-bg-card);
-      backdrop-filter: blur(10px);
+      background: var(--color-bg-elevated);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       padding: 1.25rem;
       overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .figure:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(102, 126, 234, 0.25);
+      border-color: rgba(102, 126, 234, 0.4);
     }
 
     .figure img {
       width: 100%;
       border-radius: var(--radius-md);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .figure:hover img {
+      transform: scale(1.02);
+    }
+
+    /* Shine effect on images */
+    .figure::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+      );
+      transition: left 0.6s ease;
+      pointer-events: none;
+    }
+
+    .figure:hover::after {
+      left: 100%;
     }
 
     .figure figcaption {
@@ -567,11 +768,8 @@
       line-height: 1.6;
     }
 
-    .figure figcaption strong {
-      color: var(--color-text-secondary);
-    }
+    .figure figcaption strong { color: var(--color-text-secondary); }
 
-    /* Two-column figure */
     .figure--two-col .figure__grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -579,9 +777,7 @@
     }
 
     @media (max-width: 600px) {
-      .figure--two-col .figure__grid {
-        grid-template-columns: 1fr;
-      }
+      .figure--two-col .figure__grid { grid-template-columns: 1fr; }
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -604,10 +800,11 @@
 
     .bibtex__container {
       position: relative;
-      background: var(--color-bg-elevated);
+      background: #0f172a;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
 
     .bibtex__container pre {
@@ -620,13 +817,12 @@
       font-family: var(--font-mono);
       font-size: 0.85rem;
       line-height: 1.6;
-      color: var(--color-text-secondary);
+      color: #e2e8f0;
     }
 
     .bibtex__copy {
       position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
+      top: 0.75rem; right: 0.75rem;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
@@ -634,7 +830,7 @@
       font-family: var(--font-body);
       font-size: 0.8rem;
       font-weight: 500;
-      color: var(--color-link);
+      color: #60a5fa;
       background: rgba(96, 165, 250, 0.1);
       border: 1px solid rgba(96, 165, 250, 0.2);
       border-radius: 6px;
@@ -643,7 +839,7 @@
     }
 
     .bibtex__copy:hover {
-      background: rgba(96, 165, 250, 0.15);
+      background: rgba(96, 165, 250, 0.2);
       border-color: rgba(96, 165, 250, 0.4);
     }
 
@@ -666,36 +862,125 @@
        ANIMATIONS
        ═══════════════════════════════════════════════════════════ */
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .animate-in {
-      animation: fadeInUp 0.6s ease-out forwards;
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
-    .delay-1 { animation-delay: 0.1s; }
-    .delay-2 { animation-delay: 0.2s; }
-    .delay-3 { animation-delay: 0.3s; }
-    .delay-4 { animation-delay: 0.4s; }
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
 
-    /* Selection */
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideInFromBottom {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in { animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-in-left { animation: fadeInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-in-right { animation: fadeInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-scale { animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+    /* Gradient text animation */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hero__title {
+      background-size: 200% 200%;
+      animation: gradientShift 5s ease infinite;
+    }
+
+    /* Feature list item hover */
+    .feature-list li {
+      transition: all 0.3s ease;
+    }
+
+    .feature-list li:hover {
+      padding-left: 2.5rem;
+      background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+    }
+
+    .feature-list li:hover::before {
+      transform: scale(1.3);
+    }
+
+    .feature-list li::before {
+      transition: transform 0.3s ease;
+    }
+
+    /* Hero figure special glow */
+    .hero-figure__container {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hero-figure__container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 60px rgba(102, 126, 234, 0.25);
+    }
+
+    /* Abstract hover effect */
+    .abstract {
+      transition: all 0.4s ease;
+    }
+
+    .abstract:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+    }
+
+    /* Section title underline animation */
+    .content-section__title {
+      position: relative;
+    }
+
+    .content-section__title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 20px;
+      width: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      transition: width 0.4s ease;
+    }
+
+    .content-section:hover .content-section__title::after {
+      width: 100px;
+    }
+
     ::selection {
       background: rgba(102, 126, 234, 0.3);
-      color: white;
+      color: var(--color-text);
     }
 
-    /* MathJax */
     mjx-container {
       overflow-x: auto;
       overflow-y: hidden;
       max-width: 100%;
+    }
+
+    /* Smooth scroll indicator */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Focus states for accessibility */
+    a:focus, button:focus {
+      outline: 2px solid rgba(102, 126, 234, 0.5);
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -713,30 +998,35 @@
         Research Paper
       </div>
       
+      <p class="hero__eyebrow">Rate or Fate?</p>
+      
       <h1 class="hero__title">
-        Dynamics of Reinforcement Learning<br>on the Probability Simplex
+        RLV<sup>ε</sup>R: Reinforcement Learning<br>with Verifiable Noisy Rewards
       </h1>
       
       <p class="hero__subtitle">
-        A geometric framework for understanding how RL algorithms navigate probability space, 
-        revealing phase transitions and order preservation properties.
+        Does noisy reward change the <em>rate</em> of learning or its <em>fate</em>? 
+        We analyze when noise is a usable signal that merely slows progress, and when it becomes 
+        harmful and pushes learning in the wrong direction.
       </p>
             
-            <div class="authors">
+      <div class="authors">
         <div class="authors__list">
-                <span class="author">Author Name<sup>1</sup></span>
-                <span class="author">Author Name<sup>2</sup></span>
-                <span class="author">Author Name<sup>1,✉</sup></span>
+          <span class="author">Ali Rad<sup>1,✉</sup></span>
+          <span class="author">Khashayar Filom<sup>1</sup></span>
+          <span class="author">Darioush Keivan<sup>1</sup></span>
+          <span class="author">Peyman Mohajerin Esfahani<sup>2</sup></span>
+          <span class="author">Ehsan Kamalinejad<sup>1</sup></span>
         </div>
-            </div>
-            
-            <div class="affiliations">
-        <sup>1</sup>Institution One &nbsp;&nbsp; <sup>2</sup>Institution Two
-            </div>
-            
-            <div class="contact">
-        ✉ Corresponding: <a href="mailto:email@example.com">email@example.com</a>
-            </div>
+      </div>
+      
+      <div class="affiliations">
+        <sup>1</sup>Cognichip AI &nbsp;&nbsp; <sup>2</sup>University of Toronto &nbsp;&nbsp; 
+      </div>
+      
+      <div class="contact">
+        ✉ Corresponding: <a href="mailto:ali@cognichip.ai">ali@cognichip.ai</a>
+      </div>
             
       <div class="actions">
         <a href="#" class="btn btn--paper">
@@ -747,7 +1037,7 @@
           <i class="ai ai-arxiv btn__icon"></i>
           <span>arXiv</span>
         </a>
-        <a href="#" class="btn btn--github">
+        <a href="https://github.com/cognichip/Noisy-RL" class="btn btn--github">
           <i class="fa-brands fa-github btn__icon"></i>
           <span>GitHub</span>
                 </a>
@@ -757,15 +1047,18 @@
 
 
   <!-- ═══════════════════════════════════════════════════════════
-       HERO FIGURE
+       HERO FIGURE - ANIMATED
        ═══════════════════════════════════════════════════════════ -->
         <section class="hero-figure">
     <figure class="hero-figure__container">
-      <img src="./static/images/figure_hero.png" alt="Simplex dynamics visualization">
+      <video autoplay loop muted playsinline class="hero-video" poster="./static/images/Front_page.png">
+        <source src="./static/images/hero_animation.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
                 <figcaption>
-                    <strong>(a)</strong> Trajectories on the probability simplex under different judge quality regimes.
-        <strong>(b)</strong> Phase diagram showing transitions between collapse and preservation.
-        <strong>(c)</strong> KL regularization stabilizes dynamics at non-degenerate fixed points.
+        <strong>Phase transition in RLVR under noisy rewards.</strong> 
+        The learning dynamics depend critically on the verifier's quality, characterized by Youden's index 
+        \(J = \text{TPR} - \text{FPR}\). This single scalar determines whether training improves or degrades the model.
                 </figcaption>
             </figure>
         </section>
@@ -776,13 +1069,54 @@
        ═══════════════════════════════════════════════════════════ -->
         <section class="abstract">
             <p>
-                We present a theoretical framework for understanding the dynamics of reinforcement learning algorithms 
-      on the probability simplex. Using tools from differential geometry—particularly the <strong>Shahshahani metric</strong>—we 
-                derive the governing ODEs and SDEs that describe how probability distributions evolve during training. 
-                Our analysis reveals <strong>phase transitions</strong> between regimes of diversity collapse and 
-      preservation, governed by the quality of the reward signal.
+      RLVR is simple but powerful: sample an answer, verify it, and update the model. But in practice 
+      the verifier is <strong>almost never clean</strong>-unit tests probe only finitely many corner cases, 
+      human/synthetic labels are imperfect, and LLM judges can be biased and prone to reward hacking- and 
+      this noise only worsens as we push to harder domains.
+      <br><br>
+      We leverage a novel analytical framework to study the evolution of algorithms like GRPO under general noise levels. 
+      Modeling each prompt as a <strong>multi-armed bandit</strong> over recurring reasoning modes, we derive a tractable 
+      probability-simplex flow with a <strong>sharp noise threshold</strong>. The dynamics decouple into 
+      inner competition among correct modes and an outer mean-field ODE for the total bad-mode mass \(p(t)\), 
+      whose drift depends only on <em>Youden's index</em> \(J = \text{TPR} - \text{FPR}\).
             </p>
         </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       KEY EQUATION
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="key-equation">
+    <div class="key-equation__label">The Critical Threshold</div>
+    <div class="key-equation__formula">
+      \[ J = \text{TPR} - \text{FPR} = (1 - \text{FN}) - \text{FP} \]
+    </div>
+    <div class="key-equation__explanation">
+      Youden's \(J\) index: a single scalar that determines the fate of learning
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE TRANSITION
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="phase-box">
+    <div class="phase-card phase-card--learning">
+      <div class="phase-card__condition">J &gt; 0</div>
+      <div class="phase-card__label">✓ Learning</div>
+      <div class="phase-card__desc">Bad mass \(p \to 0\)<br>Accuracy increases</div>
+    </div>
+    <div class="phase-card phase-card--neutral">
+      <div class="phase-card__condition">J = 0</div>
+      <div class="phase-card__label">○ Neutral Drift</div>
+      <div class="phase-card__desc">No net learning<br>Random walk dynamics</div>
+    </div>
+    <div class="phase-card phase-card--collapse">
+      <div class="phase-card__condition">J &lt; 0</div>
+      <div class="phase-card__label">✗ Anti-Learning</div>
+      <div class="phase-card__desc">Bad mass \(p \to 1\)<br>Accuracy collapses</div>
+    </div>
+  </div>
 
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -797,10 +1131,10 @@
                 <div class="takeaway-card">
                     <div class="takeaway-number">1</div>
                     <div class="takeaway-content">
-                        <h3>Simplex Dynamics</h3>
+          <h3>Sharp Phase Transition</h3>
                         <p>
-                            Reinforcement learning induces natural gradient flows on the probability simplex. 
-            The Shahshahani metric reveals the intrinsic geometry where distances near the boundary diverge logarithmically.
+            A single scalar—Youden's \(J = \text{TPR} - \text{FPR}\)—controls whether RLVR learns or anti-learns. 
+            The transition at \(J=0\) is sharp and predictable.
                         </p>
                     </div>
                 </div>
@@ -808,10 +1142,10 @@
                 <div class="takeaway-card">
                     <div class="takeaway-number">2</div>
                     <div class="takeaway-content">
-                        <h3>Phase Transitions</h3>
+          <h3>Rate, Not Fate</h3>
                         <p>
-            A critical transition occurs based on judge quality \(J = 1 - \text{FP} - \text{FN}\). 
-            When \(J > 0\), correct convergence; when \(J < 0\), adversarial collapse.
+            When \(J > 0\), noise primarily affects the <em>rate</em> of convergence, not the ultimate outcome. 
+            Learning still succeeds—just slower.
                         </p>
                     </div>
                 </div>
@@ -819,10 +1153,10 @@
                 <div class="takeaway-card">
                     <div class="takeaway-number">3</div>
                     <div class="takeaway-content">
-          <h3>KL Rescue</h3>
+          <h3>LLM as Multi-Armed Bandit</h3>
                         <p>
-                            KL divergence regularization can "rescue" learning even under adversarial judge conditions, 
-            preventing complete collapse to incorrect modes.
+            We model each prompt as a bandit over coarse-grained "reasoning modes," enabling tractable 
+            analysis of the full learning dynamics.
                         </p>
                     </div>
                 </div>
@@ -830,10 +1164,21 @@
                 <div class="takeaway-card">
                     <div class="takeaway-number">4</div>
                     <div class="takeaway-content">
-                        <h3>Order Preservation</h3>
-                        <p>
-            Under appropriate conditions, if one response starts more likely than another, 
-            it remains so throughout training—a key stability property.
+          <h3>KL Rescue</h3>
+          <p>
+            KL regularization can rescue learning even when \(J < 0\), preventing complete collapse 
+            by anchoring to the reference policy.
+          </p>
+        </div>
+      </div>
+      
+      <div class="takeaway-card">
+        <div class="takeaway-number">5</div>
+        <div class="takeaway-content">
+          <h3>Simplex Geometry</h3>
+          <p>
+            The dynamics live on the probability simplex with Shahshahani geometry, 
+            yielding replicator-style natural selection dynamics.
                         </p>
                     </div>
                 </div>
@@ -842,65 +1187,83 @@
 
 
   <!-- ═══════════════════════════════════════════════════════════
-       DYNAMICS SECTION
+       PHASE DIAGRAM SECTION
        ═══════════════════════════════════════════════════════════ -->
         <section class="content-section">
-    <h2 class="content-section__title">Dynamics on the Probability Simplex</h2>
-            
-            <p>
-                We study the evolution of probability distributions \(\mathbf{p} = (p_1, \ldots, p_K)\) on the 
-                \(K\)-simplex \(\Delta^{K-1} = \{\mathbf{p} : p_i \geq 0, \sum_i p_i = 1\}\). The gradient flow 
-                under the Shahshahani metric takes the form:
+    <h2 class="content-section__title">Phase Transition Dynamics</h2>
+    
+    <p>
+      The core insight is that RLVR dynamics on the probability simplex exhibit a <strong>phase transition</strong> 
+      governed by the verifier's discriminative power. The total mass on incorrect ("bad") reasoning modes 
+      evolves according to:
             </p>
             
             <div class="equation">
                 \[
-                \frac{dp_i}{dt} = p_i \left( A_i(\mathbf{p}) - \sum_j p_j A_j(\mathbf{p}) \right)
+      \frac{dp}{dt} =- p^{3/2}(1-p)^{3/2} \cdot J 
                 \]
             </div>
             
             <p>
-                where \(A_i(\mathbf{p})\) represents the advantage function for action \(i\). This replicator-like 
-                dynamics naturally preserves the simplex structure while driving probability mass toward 
-                higher-reward actions.
+      This is a mean-field ODE where the sign of \(J\) determines the direction of flow. 
+      When \(J > 0\), bad mass shrinks exponentially; when \(J < 0\), it grows to dominate.
             </p>
+
+    <figure class="animation-figure animation-figure--glow">
+      <video autoplay loop muted playsinline poster="./static/images/Phase_transiton_heatmaps_5panel.png">
+        <source src="./static/images/j_sweep.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+                <figcaption>
+        <strong>Sweeping through Youden's index.</strong>
+        Watch how the dynamics change as \(J\) varies from negative (anti-learning) to positive (learning).
+      </figcaption>
+    </figure>
             
     <figure class="figure">
-      <img src="./static/images/simplex_trajectories.png" alt="Simplex trajectories">
+      <img src="./static/images/Phase_transiton_heatmaps_5panel.png" alt="Phase transition heatmaps">
                 <figcaption>
-                    <strong>Simplex trajectories under different judge quality regimes.</strong>
-        Perfect judge (\(J=1\)) drives rapid convergence to the correct vertex.
-        Noisy judge (\(J=0.3\)) shows slower but still correct convergence.
-        Adversarial judge (\(J<0\)) drives convergence to incorrect vertices.
+        <strong>Phase transition across noise regimes.</strong> 
+        Each panel shows how the equilibrium accuracy depends on false positive (FP) and false negative (FN) rates. 
+        The critical boundary \(J = 0\) (where \(\text{FP} + \text{FN} = 1\)) separates learning from anti-learning.
                 </figcaption>
             </figure>
         </section>
 
 
   <!-- ═══════════════════════════════════════════════════════════
-       PHASE DIAGRAM SECTION
+       BANDIT MODEL SECTION
        ═══════════════════════════════════════════════════════════ -->
         <section class="content-section">
-    <h2 class="content-section__title">Phase Diagram & Critical Transitions</h2>
-            
-            <p>
-                The system exhibits rich phase behavior controlled by the judge quality parameter 
-                \(J = 1 - \text{FP} - \text{FN}\) and the KL regularization strength \(\beta\). 
-            </p>
-            
+    <h2 class="content-section__title">LLM as Multi-Armed Bandit</h2>
+    
+    <p>
+      We coarse-grain the LLM's response distribution into discrete "reasoning modes"—recurring patterns 
+      of problem-solving strategies. This transforms the intractable token-level dynamics into a 
+      multi-armed bandit where each arm represents a mode.
+    </p>
+    
     <ul class="feature-list">
-                <li><strong>Correct Convergence (\(J > 0\)):</strong> The system reliably converges to the correct answer with exponential rate.</li>
-                <li><strong>Frozen Dynamics (\(J = 0\)):</strong> At the critical point, the drift vanishes and dynamics become purely diffusive.</li>
-                <li><strong>Adversarial Collapse (\(J < 0\)):</strong> Without regularization, the system converges to incorrect answers.</li>
-      <li><strong>KL Rescue (\(J < 0, \beta > 0\)):</strong> Regularization stabilizes at non-degenerate fixed points.</li>
+      <li><strong>Good arms:</strong> Modes that produce correct answers (true positives)</li>
+      <li><strong>Bad arms:</strong> Modes that produce incorrect answers (false positives under noise)</li>
+      <li><strong>Selection pressure:</strong> GRPO's group normalization creates relative fitness competition</li>
+      <li><strong>Mutation:</strong> Sampling noise allows exploration between modes</li>
             </ul>
             
-    <figure class="figure">
-      <img src="./static/images/phase_diagram.png" alt="Phase diagram">
+    <figure class="animation-figure animation-figure--glow">
+      <img src="./static/images/flowing_particles.gif" alt="Flowing particles on simplex">
                 <figcaption>
-        <strong>Global phase diagram.</strong> The color indicates equilibrium accuracy as a 
-        function of judge quality \(J\) and KL regularization strength \(\beta\). 
-        Sharp transitions occur at critical values.
+        <strong>Particle flow on the simplex.</strong>
+        Watch how probability mass flows between modes under GRPO dynamics.
+      </figcaption>
+    </figure>
+
+    <figure class="figure">
+      <img src="./static/images/three_scenario_two_good_one_bad.png" alt="Three scenarios on the simplex">
+                <figcaption>
+        <strong>Simplex trajectories under different regimes.</strong>
+        The probability simplex shows how mass flows between good and bad modes under different 
+        verifier quality settings.
                 </figcaption>
             </figure>
         </section>
@@ -913,8 +1276,8 @@
     <h2 class="content-section__title">Shahshahani Geometry</h2>
             
             <p>
-                The natural geometry for probability distributions is given by the <em>Shahshahani metric</em>, 
-                also known as the Fisher-Rao metric:
+      The natural metric for probability distributions is the <em>Shahshahani metric</em> (Fisher-Rao metric), 
+      under which the GRPO update becomes a natural gradient flow:
             </p>
             
             <div class="equation">
@@ -924,42 +1287,99 @@
             </div>
             
             <p>
-                This metric has profound implications: small probabilities become "far away" in the geometric 
-                sense, requiring exponentially more gradient signal to change. This explains why RL dynamics 
-      naturally resist probability collapse.
+      This geometry explains key phenomena: low-probability modes are "far away" and hard to eliminate, 
+      geodesics curve away from boundaries, and the dynamics naturally preserve the simplex structure.
     </p>
+
+    <figure class="animation-figure animation-figure--glow">
+      <img src="./static/images/mesh_morphing.gif" alt="Mesh morphing animation">
+      <figcaption>
+        <strong>Metric structure visualization.</strong>
+        The grid lines show how the Shahshahani metric warps near the simplex boundaries.
+      </figcaption>
+    </figure>
     
-    <figure class="figure figure--two-col">
-      <div class="figure__grid">
-        <img src="./static/images/shahshahani_metric.png" alt="Shahshahani metric">
-        <img src="./static/images/geodesics.png" alt="Geodesics">
-                </div>
+    <figure class="figure">
+      <img src="./static/images/Shah.png" alt="Shahshahani geometry visualization">
                 <figcaption>
-        <strong>Left:</strong> The Shahshahani metric visualized as ellipses—metric balls become highly elongated near boundaries.
-        <strong>Right:</strong> Geodesics under the Shahshahani metric curve away from the simplex boundary.
+        <strong>Shahshahani geometry on the simplex.</strong>
+        The metric structure shows how distances diverge near the boundary, explaining why 
+        rare modes are resilient and hard to eliminate through gradient updates.
                 </figcaption>
             </figure>
         </section>
 
 
   <!-- ═══════════════════════════════════════════════════════════
-       ORDER PRESERVATION SECTION
+       KL SECTION
        ═══════════════════════════════════════════════════════════ -->
         <section class="content-section">
-    <h2 class="content-section__title">Order Preservation</h2>
-            
-            <p>
-                A fundamental question is whether the dynamics preserve the relative ordering of probabilities. 
-                We prove that under certain conditions, if \(p_i(0) > p_j(0)\), then \(p_i(t) > p_j(t)\) for all 
-                \(t > 0\). This <em>order preservation</em> property has important implications for the 
-                interpretability and stability of learned policies.
-            </p>
-            
+    <h2 class="content-section__title">KL Regularization Rescue</h2>
+    
+    <p>
+      When the verifier is adversarial (\(J < 0\)), unregularized RLVR collapses to bad modes. 
+      However, KL regularization to a reference policy can <strong>rescue</strong> learning by 
+      creating interior fixed points that prevent complete collapse.
+    </p>
+    
     <figure class="figure">
-      <img src="./static/images/order_preservation.png" alt="Order preservation">
+      <img src="./static/images/KL.png" alt="KL regularization phase diagram">
                 <figcaption>
-                    <strong>Order preservation in action.</strong> The probability gaps \(\delta_{ij}(t) = p_i(t) - p_j(t)\) 
-                    maintain their signs throughout training, demonstrating that initial rankings are preserved.
+        <strong>KL regularization prevents collapse.</strong>
+        The phase diagram shows how increasing the KL penalty \(\beta\) shifts the equilibrium 
+        away from the degenerate vertices, preserving diversity even when \(J < 0\).
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       EXPERIMENTS SECTION
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="content-section">
+    <h2 class="content-section__title">Experimental Validation</h2>
+    
+    <p>
+      We validate our theoretical predictions with controlled GRPO fine-tuning experiments on 
+      programmatically verified coding tasks, injecting synthetic noise at controlled FP/FN rates.
+    </p>
+    
+    <figure class="figure">
+      <img src="./static/images/Fig_2_v2.png" alt="Experimental results">
+      <figcaption>
+        <strong>Experimental validation of the phase transition.</strong>
+        Controlled experiments confirm the predicted \(J=0\) transition. When \(J > 0\) (below the diagonal), 
+        accuracy improves; when \(J < 0\) (above the diagonal), accuracy degrades—matching theory.
+      </figcaption>
+    </figure>
+    
+    <p>
+      The experiments demonstrate the "rate, not fate" phenomenon: even substantial noise 
+      (up to 40% combined error rate) still allows learning when \(J\) remains positive, 
+      albeit at reduced speed.
+    </p>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       LEARNABILITY SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Maximal Learnability</h2>
+    
+    <p>
+      A surprising finding: the <strong>learning rate is maximized</strong> when the bad mass is 
+      at intermediate values, not when starting from near-correct policies. This is because 
+      group normalization creates the strongest selection pressure when good and bad modes are balanced.
+    </p>
+    
+    <figure class="figure">
+      <img src="./static/images/learnability_pdagger_triptych.png" alt="Learnability analysis">
+                <figcaption>
+        <strong>Maximal learnability at intermediate bad mass.</strong>
+        The derivative \(|dp/dt|\) peaks around \(p \approx 0.5\), suggesting that starting from 
+        a moderately capable policy may actually accelerate learning compared to starting from 
+        a very weak or very strong policy.
                 </figcaption>
             </figure>
         </section>
@@ -974,10 +1394,11 @@
       <button class="bibtex__copy" onclick="copyBibtex()">
         <i class="fa-regular fa-copy"></i> Copy
       </button>
-                <pre><code>@article{author2025simplex,
-    title={Dynamics of Reinforcement Learning on the Probability Simplex},
-    author={Author, First and Author, Second and Author, Third},
-    journal={arXiv preprint arXiv:XXXX.XXXXX},
+      <pre><code>@article{anonymous2025rateorfate,
+    title={Rate or Fate? RLV$^\epsilon$R: Reinforcement Learning 
+           with Verifiable Noisy Rewards},
+    author={Anonymous},
+    journal={arXiv preprint},
     year={2025}
 }</code></pre>
             </div>
@@ -997,6 +1418,7 @@
     </div>
 
     <script>
+// Copy BibTeX functionality
         function copyBibtex() {
   const bibtex = document.querySelector('.bibtex__container code').innerText;
             navigator.clipboard.writeText(bibtex).then(() => {
@@ -1006,20 +1428,99 @@
   });
 }
 
-// Add scroll-triggered animations
+// Enhanced scroll animations with staggered delays
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
 const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
+  entries.forEach((entry, index) => {
     if (entry.isIntersecting) {
-      entry.target.classList.add('animate-in');
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => {
+        entry.target.classList.add('animate-in');
+        entry.target.style.opacity = '1';
+      }, delay * 100);
     }
   });
-}, { threshold: 0.1 });
+}, observerOptions);
 
-document.querySelectorAll('.takeaway-card, .content-section, .figure').forEach(el => {
+document.querySelectorAll('.takeaway-card').forEach((el, i) => {
   el.style.opacity = '0';
+  el.dataset.delay = i;
   observer.observe(el);
+});
+
+document.querySelectorAll('.phase-card').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = i;
+  observer.observe(el);
+});
+
+document.querySelectorAll('.content-section').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = 0;
+  observer.observe(el);
+});
+
+document.querySelectorAll('.figure').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = 1;
+  observer.observe(el);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const heroElements = document.querySelectorAll('.hero__badge, .hero__title, .hero__subtitle, .authors, .actions');
+  heroElements.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 100 + (i * 100));
+  });
+
+  const abstract = document.querySelector('.abstract');
+  if (abstract) {
+    abstract.style.opacity = '0';
+    abstract.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      abstract.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      abstract.style.opacity = '1';
+      abstract.style.transform = 'translateY(0)';
+    }, 600);
+  }
+
+  const keyEq = document.querySelector('.key-equation');
+  if (keyEq) {
+    keyEq.style.opacity = '0';
+    keyEq.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      keyEq.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      keyEq.style.opacity = '1';
+      keyEq.style.transform = 'scale(1)';
+    }, 700);
+  }
+});
+
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      const scrolled = window.pageYOffset;
+      const heroFig = document.querySelector('.hero-figure__container');
+      if (heroFig && scrolled < 800) {
+        heroFig.style.transform = `translateY(${scrolled * 0.03}px)`;
+      }
+      ticking = false;
+    });
+    ticking = true;
+  }
 });
     </script>
 
 </body>
 </html>
+

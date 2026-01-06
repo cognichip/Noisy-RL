@@ -2,7 +2,7 @@
 
 This repository contains the training code, paper, and project page for our research on RLVR under noisy reward signals.
 
-**Project Page:** https://cognichip.github.io/Noisy-RL/
+**Project Page:** please look at: https://cognichip.github.io/Noisy-RL/
 
 ## The Question
 

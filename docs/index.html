@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Rate or Fate? RLVεR: Reinforcement Learning with Verifiable Noisy Rewards - Does noisy reward change the rate of learning or its fate?">
+  <meta name="keywords" content="RLVR, GRPO, reinforcement learning, noisy rewards, LLM, phase transition, Youden index, multi-armed bandit, probability simplex">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rate or Fate? | RLVεR: RL with Verifiable Noisy Rewards</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>△</text></svg>">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Academicons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       ROOT VARIABLES & THEME - LIGHT MODE
+       ═══════════════════════════════════════════════════════════ */
+    :root {
+      /* Color Palette - Warm Cream with Rich Accents */
+      --color-bg: #faf8f5;
+      --color-bg-elevated: #ffffff;
+      --color-bg-card: rgba(255, 255, 255, 0.8);
+      --color-surface: #f3f0eb;
+      --color-border: rgba(0, 0, 0, 0.08);
+      --color-border-hover: rgba(0, 0, 0, 0.15);
+      
+      --color-text: #1a1a1a;
+      --color-text-secondary: #4a4a4a;
+      --color-text-muted: #7a7a7a;
+      
+      /* Accent gradients - Research theme with purple/teal */
+      --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --gradient-accent: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+      --gradient-warm: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      --gradient-cool: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+      --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --gradient-mesh: radial-gradient(at 0% 0%, hsla(253, 91%, 75%, 0.08) 0px, transparent 50%),
+                       radial-gradient(at 100% 0%, hsla(339, 90%, 68%, 0.06) 0px, transparent 50%),
+                       radial-gradient(at 100% 100%, hsla(37, 91%, 55%, 0.06) 0px, transparent 50%),
+                       radial-gradient(at 0% 100%, hsla(199, 89%, 48%, 0.06) 0px, transparent 50%);
+      
+      --color-link: #6366f1;
+      --color-link-hover: #4f46e5;
+      
+      /* Typography */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+      
+      /* Spacing */
+      --section-gap: 5rem;
+      --content-max: 800px;
+      --content-wide: 1100px;
+      
+      /* Effects */
+      --shadow-glow: 0 8px 32px rgba(99, 102, 241, 0.15);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+      --shadow-elevated: 0 8px 40px rgba(0, 0, 0, 0.08);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      color: var(--color-text);
+      background: var(--color-bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--gradient-mesh);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    a {
+      color: var(--color-link);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    a:hover { color: var(--color-link-hover); }
+    img { max-width: 100%; height: auto; }
+
+    /* ═══════════════════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════════════════ */
+    .page-wrapper {
+      max-width: var(--content-wide);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .section { padding: var(--section-gap) 0; }
+    .section--hero { padding-top: 4rem; padding-bottom: 2rem; }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════════ */
+    .hero { text-align: center; position: relative; }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--gradient-primary);
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      color: white;
+      animation: float 3s ease-in-out infinite;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .hero__eyebrow {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
+      font-weight: 600;
+      line-height: 1.2;
+      margin: 0 0 1.5rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #1a1a1a 0%, #4f46e5 50%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero__subtitle {
+      font-size: 1.15rem;
+      color: var(--color-text-secondary);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* Authors */
+    .authors { margin-bottom: 0.75rem; }
+    .authors__list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem 1rem;
+      font-size: 1.1rem;
+    }
+    .author { color: var(--color-text); }
+    .author sup { color: var(--color-link); font-weight: 600; }
+
+    .affiliations {
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .affiliations sup { color: var(--color-link); }
+
+    .contact {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.4rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text);
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      box-shadow: var(--shadow-card);
+    }
+
+    .btn:hover {
+      border-color: var(--color-border-hover);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: var(--shadow-glow);
+      color: var(--color-text);
+    }
+
+    .btn:active {
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    .btn--paper .btn__icon { color: #ef4444; }
+    .btn--arxiv .btn__icon { color: #f59e0b; }
+    .btn--github .btn__icon { color: #6366f1; }
+    .btn__icon { 
+      font-size: 1.1rem;
+      transition: transform 0.3s ease;
+    }
+
+    .btn:hover .btn__icon {
+      transform: scale(1.2);
+    }
+
+    /* Subtle pulse animation on buttons */
+    @keyframes subtlePulse {
+      0%, 100% { box-shadow: var(--shadow-card); }
+      50% { box-shadow: 0 6px 30px rgba(99, 102, 241, 0.15); }
+    }
+
+    .btn--paper:hover { animation: subtlePulse 2s ease-in-out infinite; }
+    .btn--arxiv:hover { animation: subtlePulse 2s ease-in-out infinite 0.3s; }
+    .btn--github:hover { animation: subtlePulse 2s ease-in-out infinite 0.6s; }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO FIGURE
+       ═══════════════════════════════════════════════════════════ */
+    .hero-figure { margin: 3rem 0; }
+
+    .hero-figure__container {
+      position: relative;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-elevated);
+      overflow: hidden;
+    }
+
+    .hero-figure__container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+    }
+
+    .hero-figure img,
+    .hero-figure video,
+    .hero-video {
+      width: 100%;
+      border-radius: var(--radius-md);
+    }
+    
+    /* Animation figures */
+    .animation-figure {
+      margin: 2rem 0;
+    }
+    
+    .animation-figure video,
+    .animation-figure img {
+      width: 100%;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-card);
+    }
+    
+    .animation-figure--glow video,
+    .animation-figure--glow img {
+      box-shadow: 0 8px 40px rgba(99, 102, 241, 0.2);
+    }
+
+    .hero-figure figcaption {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ABSTRACT
+       ═══════════════════════════════════════════════════════════ */
+    .abstract {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.06) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .abstract::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--gradient-primary);
+    }
+
+    .abstract p {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--color-text-secondary);
+    }
+
+    .abstract strong { color: #6366f1; font-weight: 600; }
+    .abstract em { color: var(--color-text); font-style: italic; }
+
+    /* ═══════════════════════════════════════════════════════════
+       KEY EQUATION HIGHLIGHT
+       ═══════════════════════════════════════════════════════════ */
+    .key-equation {
+      max-width: 700px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--color-bg-elevated);
+      border: 2px solid rgba(99, 102, 241, 0.2);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      box-shadow: var(--shadow-card);
+    }
+
+    .key-equation__label {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .key-equation__formula {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .key-equation__explanation {
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+    }
+
+    /* Key equation hover effect */
+    .key-equation {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .key-equation:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .key-equation::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .key-equation:hover::before {
+      opacity: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       TAKEAWAYS
+       ═══════════════════════════════════════════════════════════ */
+    .takeaways { padding: var(--section-gap) 0; }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 500;
+      margin: 0;
+      color: var(--color-text);
+    }
+
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .takeaway-grid { grid-template-columns: 1fr; }
+    }
+
+    .takeaway-card {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .takeaway-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .takeaway-card:nth-child(1)::before { background: var(--gradient-success); }
+    .takeaway-card:nth-child(2)::before { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(3)::before { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(4)::before { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(5)::before { background: var(--gradient-primary); }
+
+    .takeaway-card:hover {
+      border-color: var(--color-border-hover);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: var(--shadow-elevated);
+    }
+
+    .takeaway-card:hover::before { opacity: 1; }
+
+    /* Colored glow on hover for each card */
+    .takeaway-card:nth-child(1):hover { box-shadow: 0 15px 40px rgba(16, 185, 129, 0.2); }
+    .takeaway-card:nth-child(2):hover { box-shadow: 0 15px 40px rgba(245, 158, 11, 0.2); }
+    .takeaway-card:nth-child(3):hover { box-shadow: 0 15px 40px rgba(236, 72, 153, 0.2); }
+    .takeaway-card:nth-child(4):hover { box-shadow: 0 15px 40px rgba(6, 182, 212, 0.2); }
+    .takeaway-card:nth-child(5):hover { box-shadow: 0 15px 40px rgba(99, 102, 241, 0.2); }
+
+    /* Staggered animation delays */
+    .takeaway-card:nth-child(1) { animation-delay: 0.1s; }
+    .takeaway-card:nth-child(2) { animation-delay: 0.2s; }
+    .takeaway-card:nth-child(3) { animation-delay: 0.3s; }
+    .takeaway-card:nth-child(4) { animation-delay: 0.4s; }
+    .takeaway-card:nth-child(5) { animation-delay: 0.5s; }
+
+    .takeaway-number {
+      flex-shrink: 0;
+      width: 2.5rem; height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .takeaway-card:nth-child(1) .takeaway-number { background: var(--gradient-success); }
+    .takeaway-card:nth-child(2) .takeaway-number { background: var(--gradient-warm); }
+    .takeaway-card:nth-child(3) .takeaway-number { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(4) .takeaway-number { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(5) .takeaway-number { background: var(--gradient-primary); }
+
+    .takeaway-content h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0 0 0.5rem;
+      color: var(--color-text);
+    }
+
+    .takeaway-content p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       PHASE TRANSITION BOX
+       ═══════════════════════════════════════════════════════════ */
+    .phase-box {
+      max-width: 900px;
+      margin: 3rem auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 700px) {
+      .phase-box { grid-template-columns: 1fr; }
+    }
+
+    .phase-card {
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+      border: 1px solid var(--color-border);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+    }
+
+    .phase-card:hover {
+      transform: translateY(-5px) scale(1.03);
+    }
+
+    .phase-card--learning:hover {
+      box-shadow: 0 15px 40px rgba(16, 185, 129, 0.25);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .phase-card--neutral:hover {
+      box-shadow: 0 15px 40px rgba(245, 158, 11, 0.25);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+
+    .phase-card--collapse:hover {
+      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .phase-card--learning {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .phase-card--neutral {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .phase-card--collapse {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .phase-card__condition {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .phase-card--learning .phase-card__condition { color: #059669; }
+    .phase-card--neutral .phase-card__condition { color: #d97706; }
+    .phase-card--collapse .phase-card__condition { color: #dc2626; }
+
+    .phase-card__label {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--color-text);
+    }
+
+    .phase-card__desc {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       CONTENT SECTIONS
+       ═══════════════════════════════════════════════════════════ */
+    .content-section {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: var(--section-gap) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .content-section:first-of-type { border-top: none; }
+
+    .content-section__title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 500;
+      margin: 0 0 1.5rem;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .content-section__title::before {
+      content: '';
+      width: 4px; height: 1.5rem;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+    }
+
+    .content-section p {
+      margin: 0 0 1.25rem;
+      color: var(--color-text-secondary);
+    }
+    .content-section p:last-child { margin-bottom: 0; }
+
+    /* Equation Block - Enhanced */
+    .equation {
+      margin: 2rem 0;
+      padding: 1.5rem 2rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: center;
+      overflow-x: auto;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .equation:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border-color: rgba(99, 102, 241, 0.2);
+      transform: scale(1.01);
+    }
+
+    .equation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .equation:hover::before {
+      opacity: 1;
+    }
+
+    /* Feature List */
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+    }
+
+    .feature-list li {
+      position: relative;
+      padding: 1rem 0 1rem 2rem;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+    }
+    .feature-list li:last-child { border-bottom: none; }
+
+    .feature-list li::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 1.35rem;
+      width: 8px; height: 8px;
+      background: var(--gradient-primary);
+      border-radius: 50%;
+    }
+
+    .feature-list li strong { color: var(--color-text); }
+
+    /* Figure - Enhanced with hover effects */
+    .figure {
+      margin: 2rem 0;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .figure:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .figure img {
+      width: 100%;
+      border-radius: var(--radius-md);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .figure:hover img {
+      transform: scale(1.02);
+    }
+
+    /* Shine effect on images */
+    .figure::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+      );
+      transition: left 0.6s ease;
+      pointer-events: none;
+    }
+
+    .figure:hover::after {
+      left: 100%;
+    }
+
+    .figure figcaption {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    .figure figcaption strong { color: var(--color-text-secondary); }
+
+    .figure--two-col .figure__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .figure--two-col .figure__grid { grid-template-columns: 1fr; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BIBTEX
+       ═══════════════════════════════════════════════════════════ */
+    .bibtex {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: var(--section-gap) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .bibtex__title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0 0 1rem;
+      color: var(--color-text);
+    }
+
+    .bibtex__container {
+      position: relative;
+      background: #1e293b;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .bibtex__container pre {
+      margin: 0;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .bibtex__container code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+
+    .bibtex__copy {
+      position: absolute;
+      top: 0.75rem; right: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #60a5fa;
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .bibtex__copy:hover {
+      background: rgba(96, 165, 250, 0.15);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ */
+    .footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+    }
+
+    .footer p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════════════════════ */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideInFromBottom {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in { animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-in-left { animation: fadeInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-in-right { animation: fadeInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .animate-scale { animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+    /* Gradient text animation */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hero__title {
+      background-size: 200% 200%;
+      animation: gradientShift 5s ease infinite;
+    }
+
+    /* Feature list item hover */
+    .feature-list li {
+      transition: all 0.3s ease;
+    }
+
+    .feature-list li:hover {
+      padding-left: 2.5rem;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+    }
+
+    .feature-list li:hover::before {
+      transform: scale(1.3);
+    }
+
+    .feature-list li::before {
+      transition: transform 0.3s ease;
+    }
+
+    /* Hero figure special glow */
+    .hero-figure__container {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .hero-figure__container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 60px rgba(99, 102, 241, 0.15);
+    }
+
+    /* Abstract hover effect */
+    .abstract {
+      transition: all 0.4s ease;
+    }
+
+    .abstract:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Section title underline animation */
+    .content-section__title {
+      position: relative;
+    }
+
+    .content-section__title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 20px;
+      width: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      transition: width 0.4s ease;
+    }
+
+    .content-section:hover .content-section__title::after {
+      width: 100px;
+    }
+
+    ::selection {
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--color-text);
+    }
+
+    mjx-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+    }
+
+    /* Smooth scroll indicator */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Focus states for accessibility */
+    a:focus, button:focus {
+      outline: 2px solid rgba(99, 102, 241, 0.5);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="section section--hero">
+    <div class="hero">
+      <div class="hero__badge">
+        <i class="fa-solid fa-flask"></i>
+        Research Paper
+      </div>
+      
+      <p class="hero__eyebrow">Rate or Fate?</p>
+      
+      <h1 class="hero__title">
+        RLV<sup>ε</sup>R: Reinforcement Learning<br>with Verifiable Noisy Rewards
+      </h1>
+      
+      <p class="hero__subtitle">
+        Does noisy reward change the <em>rate</em> of learning or its <em>fate</em>? 
+        We analyze when noise is a usable signal that merely slows progress, and when it becomes 
+        harmful and pushes learning in the wrong direction.
+      </p>
+            
+            <div class="authors">
+        <div class="authors__list">
+          <span class="author">Ali Rad, Khashayar Filom, Darioush Keivan,
+            Peyman Mohajerin Esfahani, Ehsan Kamalinejad</span>
+        </div>
+            </div>
+            
+            <div class="affiliations">
+        <sup>1</sup>Institution
+            </div>
+            
+      <div class="actions">
+        <a href="#" class="btn btn--paper">
+          <i class="fa-solid fa-file-pdf btn__icon"></i>
+          <span>Paper</span>
+        </a>
+        <a href="#" class="btn btn--arxiv">
+          <i class="ai ai-arxiv btn__icon"></i>
+          <span>arXiv</span>
+        </a>
+        <a href="https://github.com/cognichip/Noisy-RL" class="btn btn--github">
+          <i class="fa-brands fa-github btn__icon"></i>
+          <span>GitHub</span>
+                </a>
+            </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO FIGURE - ANIMATED
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="hero-figure">
+    <figure class="hero-figure__container">
+      <video autoplay loop muted playsinline class="hero-video">
+        <source src="./static/images/hero_animation.mp4" type="video/mp4">
+        <!-- Fallback to static image if video doesn't load -->
+        <img src="./static/images/Front_page.png" alt="Phase transition in RLVR under noisy rewards">
+      </video>
+                <figcaption>
+        <strong>Phase transition in RLVR under noisy rewards.</strong> 
+        The learning dynamics depend critically on the verifier's quality, characterized by Youden's index 
+        \(J = \text{TPR} - \text{FPR}\). This single scalar determines whether training improves or degrades the model.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ABSTRACT
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="abstract">
+            <p>
+      RLVR is simple but powerful: sample an answer, verify it, and update the model. But in practice 
+      the verifier is <strong>almost never clean</strong>—unit tests probe only finitely many corner cases, 
+      human/synthetic labels are imperfect, and LLM judges can be biased and prone to reward hacking—and 
+      this noise only worsens as we push to harder domains.
+      <br><br>
+      We leverage a novel analytical framework to study the evolution of algorithms like GRPO under general noise levels. 
+      Modeling each prompt as a <strong>multi-armed bandit</strong> over recurring reasoning modes, we derive a tractable 
+      probability-simplex flow with a <strong>sharp noise threshold</strong>. The dynamics decouple into 
+      inner competition among correct modes and an outer mean-field ODE for the total bad-mode mass \(p(t)\), 
+      whose drift depends only on <em>Youden's index</em> \(J = \text{TPR} - \text{FPR}\).
+            </p>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       KEY EQUATION
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="key-equation">
+    <div class="key-equation__label">The Critical Threshold</div>
+    <div class="key-equation__formula">
+      \[ J = \text{TPR} - \text{FPR} = (1 - \text{FN}) - \text{FP} \]
+    </div>
+    <div class="key-equation__explanation">
+      Youden's \(J\) index: a single scalar that determines the fate of learning
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE TRANSITION
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="phase-box">
+    <div class="phase-card phase-card--learning">
+      <div class="phase-card__condition">J &gt; 0</div>
+      <div class="phase-card__label">✓ Learning</div>
+      <div class="phase-card__desc">Bad mass \(p \to 0\)<br>Accuracy increases</div>
+    </div>
+    <div class="phase-card phase-card--neutral">
+      <div class="phase-card__condition">J = 0</div>
+      <div class="phase-card__label">○ Neutral Drift</div>
+      <div class="phase-card__desc">No net learning<br>Random walk dynamics</div>
+    </div>
+    <div class="phase-card phase-card--collapse">
+      <div class="phase-card__condition">J &lt; 0</div>
+      <div class="phase-card__label">✗ Anti-Learning</div>
+      <div class="phase-card__desc">Bad mass \(p \to 1\)<br>Accuracy collapses</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAKEAWAYS
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="takeaways">
+    <div class="section-header">
+      <h2 class="section-title">Key Takeaways</h2>
+    </div>
+            
+            <div class="takeaway-grid">
+                <div class="takeaway-card">
+                    <div class="takeaway-number">1</div>
+                    <div class="takeaway-content">
+          <h3>Sharp Phase Transition</h3>
+                        <p>
+            A single scalar—Youden's \(J = \text{TPR} - \text{FPR}\)—controls whether RLVR learns or anti-learns. 
+            The transition at \(J=0\) is sharp and predictable.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">2</div>
+                    <div class="takeaway-content">
+          <h3>Rate, Not Fate</h3>
+                        <p>
+            When \(J > 0\), noise primarily affects the <em>rate</em> of convergence, not the ultimate outcome. 
+            Learning still succeeds—just slower.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">3</div>
+                    <div class="takeaway-content">
+          <h3>LLM as Multi-Armed Bandit</h3>
+                        <p>
+            We model each prompt as a bandit over coarse-grained "reasoning modes," enabling tractable 
+            analysis of the full learning dynamics.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">4</div>
+                    <div class="takeaway-content">
+          <h3>KL Rescue</h3>
+          <p>
+            KL regularization can rescue learning even when \(J < 0\), preventing complete collapse 
+            by anchoring to the reference policy.
+          </p>
+        </div>
+      </div>
+      
+      <div class="takeaway-card">
+        <div class="takeaway-number">5</div>
+        <div class="takeaway-content">
+          <h3>Simplex Geometry</h3>
+          <p>
+            The dynamics live on the probability simplex with Shahshahani geometry, 
+            yielding replicator-style natural selection dynamics.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE DIAGRAM SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Phase Transition Dynamics</h2>
+    
+    <p>
+      The core insight is that RLVR dynamics on the probability simplex exhibit a <strong>phase transition</strong> 
+      governed by the verifier's discriminative power. The total mass on incorrect ("bad") reasoning modes 
+      evolves according to:
+            </p>
+            
+            <div class="equation">
+                \[
+      \frac{dp}{dt} =- p^{3/2}(1-p)^{3/2} \cdot J 
+                \]
+            </div>
+            
+            <p>
+      This is a mean-field ODE where the sign of \(J\) determines the direction of flow. 
+      When \(J > 0\), bad mass shrinks exponentially; when \(J < 0\), it grows to dominate.
+            </p>
+
+    <!-- Animated J-sweep visualization -->
+    <figure class="animation-figure animation-figure--glow">
+      <video autoplay loop muted playsinline>
+        <source src="./static/images/j_sweep.mp4" type="video/mp4">
+        <img src="./static/images/j_sweep.gif" alt="J sweep animation">
+      </video>
+                <figcaption>
+        <strong>Sweeping through Youden's index.</strong>
+        Watch how the dynamics change as \(J\) varies from negative (anti-learning) to positive (learning).
+      </figcaption>
+    </figure>
+            
+    <figure class="figure">
+      <img src="./static/images/Phase_transiton_heatmaps_5panel.png" alt="Phase transition heatmaps">
+                <figcaption>
+        <strong>Phase transition across noise regimes.</strong> 
+        Each panel shows how the equilibrium accuracy depends on false positive (FP) and false negative (FN) rates. 
+        The critical boundary \(J = 0\) (where \(\text{FP} + \text{FN} = 1\)) separates learning from anti-learning.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BANDIT MODEL SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">LLM as Multi-Armed Bandit</h2>
+    
+    <p>
+      We coarse-grain the LLM's response distribution into discrete "reasoning modes"—recurring patterns 
+      of problem-solving strategies. This transforms the intractable token-level dynamics into a 
+      multi-armed bandit where each arm represents a mode.
+    </p>
+    
+    <ul class="feature-list">
+      <li><strong>Good arms:</strong> Modes that produce correct answers (true positives)</li>
+      <li><strong>Bad arms:</strong> Modes that produce incorrect answers (false positives under noise)</li>
+      <li><strong>Selection pressure:</strong> GRPO's group normalization creates relative fitness competition</li>
+      <li><strong>Mutation:</strong> Sampling noise allows exploration between modes</li>
+            </ul>
+            
+    <!-- Animated particle flow visualization -->
+    <figure class="animation-figure animation-figure--glow">
+      <img src="./static/images/flowing_particles.gif" alt="Flowing particles on simplex">
+                <figcaption>
+        <strong>Particle flow on the simplex.</strong>
+        Watch how probability mass flows between modes under GRPO dynamics.
+      </figcaption>
+    </figure>
+
+    <figure class="figure">
+      <img src="./static/images/three_scenario_two_good_one_bad.png" alt="Three scenarios on the simplex">
+                <figcaption>
+        <strong>Simplex trajectories under different regimes.</strong>
+        The probability simplex shows how mass flows between good and bad modes under different 
+        verifier quality settings.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       GEOMETRY SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Shahshahani Geometry</h2>
+            
+            <p>
+      The natural metric for probability distributions is the <em>Shahshahani metric</em> (Fisher-Rao metric), 
+      under which the GRPO update becomes a natural gradient flow:
+            </p>
+            
+            <div class="equation">
+                \[
+                g_{ij}^{\text{Shah}}(\mathbf{p}) = \frac{\delta_{ij}}{p_i}
+                \]
+            </div>
+            
+            <p>
+      This geometry explains key phenomena: low-probability modes are "far away" and hard to eliminate, 
+      geodesics curve away from boundaries, and the dynamics naturally preserve the simplex structure.
+    </p>
+
+    <!-- Animated mesh visualization -->
+    <figure class="animation-figure animation-figure--glow">
+      <video autoplay loop muted playsinline>
+        <source src="./static/images/mesh_morphing.mp4" type="video/mp4">
+        <img src="./static/images/mesh_morphing.gif" alt="Mesh morphing animation">
+      </video>
+                <figcaption>
+        <strong>Metric structure visualization.</strong>
+        The grid lines show how the Shahshahani metric warps near the simplex boundaries.
+      </figcaption>
+    </figure>
+    
+    <figure class="figure">
+      <img src="./static/images/Shah.png" alt="Shahshahani geometry visualization">
+                <figcaption>
+        <strong>Shahshahani geometry on the simplex.</strong>
+        The metric structure shows how distances diverge near the boundary, explaining why 
+        rare modes are resilient and hard to eliminate through gradient updates.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       KL SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">KL Regularization Rescue</h2>
+    
+    <p>
+      When the verifier is adversarial (\(J < 0\)), unregularized RLVR collapses to bad modes. 
+      However, KL regularization to a reference policy can <strong>rescue</strong> learning by 
+      creating interior fixed points that prevent complete collapse.
+    </p>
+    
+    <figure class="figure">
+      <img src="./static/images/KL.png" alt="KL regularization phase diagram">
+                <figcaption>
+        <strong>KL regularization prevents collapse.</strong>
+        The phase diagram shows how increasing the KL penalty \(\beta\) shifts the equilibrium 
+        away from the degenerate vertices, preserving diversity even when \(J < 0\).
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       EXPERIMENTS SECTION
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="content-section">
+    <h2 class="content-section__title">Experimental Validation</h2>
+    
+    <p>
+      We validate our theoretical predictions with controlled GRPO fine-tuning experiments on 
+      programmatically verified coding tasks, injecting synthetic noise at controlled FP/FN rates.
+    </p>
+    
+    <figure class="figure">
+      <img src="./static/images/Fig_2_v2.png" alt="Experimental results">
+      <figcaption>
+        <strong>Experimental validation of the phase transition.</strong>
+        Controlled experiments confirm the predicted \(J=0\) transition. When \(J > 0\) (below the diagonal), 
+        accuracy improves; when \(J < 0\) (above the diagonal), accuracy degrades—matching theory.
+      </figcaption>
+    </figure>
+    
+    <p>
+      The experiments demonstrate the "rate, not fate" phenomenon: even substantial noise 
+      (up to 40% combined error rate) still allows learning when \(J\) remains positive, 
+      albeit at reduced speed.
+    </p>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       LEARNABILITY SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Maximal Learnability</h2>
+    
+    <p>
+      A surprising finding: the <strong>learning rate is maximized</strong> when the bad mass is 
+      at intermediate values, not when starting from near-correct policies. This is because 
+      group normalization creates the strongest selection pressure when good and bad modes are balanced.
+    </p>
+    
+    <figure class="figure">
+      <img src="./static/images/learnability_pdagger_triptych.png" alt="Learnability analysis">
+                <figcaption>
+        <strong>Maximal learnability at intermediate bad mass.</strong>
+        The derivative \(|dp/dt|\) peaks around \(p \approx 0.5\), suggesting that starting from 
+        a moderately capable policy may actually accelerate learning compared to starting from 
+        a very weak or very strong policy.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BIBTEX
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="bibtex">
+    <h2 class="bibtex__title">Citation</h2>
+    <div class="bibtex__container">
+      <button class="bibtex__copy" onclick="copyBibtex()">
+        <i class="fa-regular fa-copy"></i> Copy
+      </button>
+      <pre><code>@article{anonymous2025rateorfate,
+    title={Rate or Fate? RLV$^\epsilon$R: Reinforcement Learning 
+           with Verifiable Noisy Rewards},
+    author={Anonymous},
+    journal={arXiv preprint},
+    year={2025}
+}</code></pre>
+            </div>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <p>
+      Template adapted from <a href="https://nerfies.github.io">Nerfies</a>. 
+      Built with care for the research community.
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+// Copy BibTeX functionality
+        function copyBibtex() {
+  const bibtex = document.querySelector('.bibtex__container code').innerText;
+            navigator.clipboard.writeText(bibtex).then(() => {
+    const btn = document.querySelector('.bibtex__copy');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 2000);
+  });
+}
+
+// Enhanced scroll animations with staggered delays
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      // Add staggered delay based on element position
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => {
+        entry.target.classList.add('animate-in');
+        entry.target.style.opacity = '1';
+      }, delay * 100);
+    }
+  });
+}, observerOptions);
+
+// Apply animations with staggered delays
+document.querySelectorAll('.takeaway-card').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = i;
+  observer.observe(el);
+});
+
+document.querySelectorAll('.phase-card').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = i;
+  observer.observe(el);
+});
+
+document.querySelectorAll('.content-section').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = 0;
+  observer.observe(el);
+});
+
+document.querySelectorAll('.figure').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.dataset.delay = 1;
+  observer.observe(el);
+});
+
+// Animate hero elements on load
+document.addEventListener('DOMContentLoaded', () => {
+  const heroElements = document.querySelectorAll('.hero__badge, .hero__title, .hero__subtitle, .authors, .actions');
+  heroElements.forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    }, 100 + (i * 100));
+  });
+
+  // Animate abstract
+  const abstract = document.querySelector('.abstract');
+  if (abstract) {
+    abstract.style.opacity = '0';
+    abstract.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      abstract.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      abstract.style.opacity = '1';
+      abstract.style.transform = 'translateY(0)';
+    }, 600);
+  }
+
+  // Animate key equation
+  const keyEq = document.querySelector('.key-equation');
+  if (keyEq) {
+    keyEq.style.opacity = '0';
+    keyEq.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      keyEq.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      keyEq.style.opacity = '1';
+      keyEq.style.transform = 'scale(1)';
+    }, 700);
+  }
+});
+
+// Parallax-like effect on scroll (subtle)
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    window.requestAnimationFrame(() => {
+      const scrolled = window.pageYOffset;
+      const heroFig = document.querySelector('.hero-figure__container');
+      if (heroFig && scrolled < 800) {
+        heroFig.style.transform = `translateY(${scrolled * 0.03}px)`;
+      }
+      ticking = false;
+    });
+    ticking = true;
+  }
+});
+    </script>
+
+</body>
+</html>

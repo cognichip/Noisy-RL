@@ -1,0 +1,24 @@
+# RLVεR: Reinforcement Learning with Verifiable Noisy Rewards
+# Requirements
+
+# Core
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.14.0
+accelerate>=0.21.0
+
+# Training
+verl>=0.1.0  # GRPO training framework
+wandb>=0.15.0
+
+# Analysis
+numpy>=1.24.0
+scipy>=1.11.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+pandas>=2.0.0
+
+# Jupyter
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+

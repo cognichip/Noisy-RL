@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Dynamics of Reinforcement Learning on the Probability Simplex">
+  <meta name="keywords" content="RL, reinforcement learning, probability simplex, Shahshahani, GRPO, KL divergence, phase transition">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simplex Dynamics | RL on the Probability Simplex</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>△</text></svg>">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Google Fonts - Premium Selection -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Academicons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       ROOT VARIABLES & THEME
+       ═══════════════════════════════════════════════════════════ */
+    :root {
+      /* Color Palette - Deep Ocean with Coral Accents */
+      --color-bg: #0a0f1a;
+      --color-bg-elevated: #111827;
+      --color-bg-card: rgba(17, 24, 39, 0.7);
+      --color-surface: #1f2937;
+      --color-border: rgba(255, 255, 255, 0.08);
+      --color-border-hover: rgba(255, 255, 255, 0.15);
+      
+      --color-text: #f9fafb;
+      --color-text-secondary: #9ca3af;
+      --color-text-muted: #6b7280;
+      
+      /* Accent gradients */
+      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-warm: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      --gradient-cool: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-mesh: radial-gradient(at 40% 20%, hsla(228, 95%, 70%, 0.15) 0px, transparent 50%),
+                       radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.1) 0px, transparent 50%),
+                       radial-gradient(at 0% 50%, hsla(355, 100%, 70%, 0.1) 0px, transparent 50%),
+                       radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.1) 0px, transparent 50%),
+                       radial-gradient(at 0% 100%, hsla(269, 100%, 77%, 0.1) 0px, transparent 50%);
+      
+      --color-link: #60a5fa;
+      --color-link-hover: #93c5fd;
+      
+      /* Typography */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+      
+      /* Spacing */
+      --section-gap: 6rem;
+      --content-max: 800px;
+      --content-wide: 1100px;
+      
+      /* Effects */
+      --shadow-glow: 0 0 60px rgba(102, 126, 234, 0.15);
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.3);
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESET & BASE
+       ═══════════════════════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+      font-size: 1.0625rem;
+      line-height: 1.7;
+      color: var(--color-text);
+      background: var(--color-bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Mesh gradient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--gradient-mesh);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    a {
+      color: var(--color-link);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: var(--color-link-hover);
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       LAYOUT
+       ═══════════════════════════════════════════════════════════ */
+    .page-wrapper {
+      max-width: var(--content-wide);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    .section {
+      padding: var(--section-gap) 0;
+    }
+
+    .section--hero {
+      padding-top: 4rem;
+      padding-bottom: 3rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════════ */
+    .hero {
+      text-align: center;
+      position: relative;
+    }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--gradient-primary);
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.25rem, 6vw, 3.5rem);
+      font-weight: 600;
+      line-height: 1.15;
+      margin: 0 0 1.5rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, #e0e7ff 50%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero__subtitle {
+      font-size: 1.25rem;
+      color: var(--color-text-secondary);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+      font-weight: 300;
+    }
+
+    /* Authors */
+    .authors {
+      margin-bottom: 0.75rem;
+    }
+
+    .authors__list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem 1rem;
+      font-size: 1.1rem;
+    }
+
+    .author {
+      color: var(--color-text);
+    }
+
+    .author sup {
+      color: var(--color-link);
+      font-weight: 600;
+    }
+
+    .affiliations {
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .affiliations sup {
+      color: var(--color-link);
+    }
+
+    .contact {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Action Buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.7rem 1.4rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: white;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--color-bg-elevated);
+      border-color: var(--color-border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+      color: white;
+    }
+
+    .btn--paper .btn__icon { color: #f87171; }
+    .btn--arxiv .btn__icon { color: #fbbf24; }
+    .btn--github .btn__icon { color: #a78bfa; }
+
+    .btn__icon {
+      font-size: 1.1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO FIGURE
+       ═══════════════════════════════════════════════════════════ */
+    .hero-figure {
+      margin: 3rem 0;
+      position: relative;
+    }
+
+    .hero-figure__container {
+      position: relative;
+      background: var(--color-bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .hero-figure__container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    .hero-figure img {
+      width: 100%;
+      border-radius: var(--radius-md);
+    }
+
+    .hero-figure figcaption {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ABSTRACT
+       ═══════════════════════════════════════════════════════════ */
+    .abstract {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .abstract::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--gradient-primary);
+    }
+
+    .abstract p {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+
+    .abstract strong {
+      color: #a78bfa;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       TAKEAWAYS
+       ═══════════════════════════════════════════════════════════ */
+    .takeaways {
+      padding: var(--section-gap) 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 500;
+      margin: 0;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .takeaway-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .takeaway-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .takeaway-card {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: var(--color-bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .takeaway-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .takeaway-card:nth-child(1)::before { background: var(--gradient-primary); }
+    .takeaway-card:nth-child(2)::before { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(3)::before { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(4)::before { background: var(--gradient-warm); }
+
+    .takeaway-card:hover {
+      border-color: var(--color-border-hover);
+      transform: translateY(-3px);
+    }
+
+    .takeaway-card:hover::before {
+      opacity: 1;
+    }
+
+    .takeaway-number {
+      flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      border-radius: 10px;
+    }
+
+    .takeaway-card:nth-child(1) .takeaway-number { background: var(--gradient-primary); }
+    .takeaway-card:nth-child(2) .takeaway-number { background: var(--gradient-accent); }
+    .takeaway-card:nth-child(3) .takeaway-number { background: var(--gradient-cool); }
+    .takeaway-card:nth-child(4) .takeaway-number { background: var(--gradient-warm); }
+
+    .takeaway-content h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0 0 0.5rem;
+      color: var(--color-text);
+    }
+
+    .takeaway-content p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       CONTENT SECTIONS
+       ═══════════════════════════════════════════════════════════ */
+    .content-section {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: var(--section-gap) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .content-section:first-of-type {
+      border-top: none;
+    }
+
+    .content-section__title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 500;
+      margin: 0 0 1.5rem;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .content-section__title::before {
+      content: '';
+      width: 4px;
+      height: 1.5rem;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+    }
+
+    .content-section p {
+      margin: 0 0 1.25rem;
+      color: var(--color-text-secondary);
+    }
+
+    .content-section p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Equation Block */
+    .equation {
+      margin: 2rem 0;
+      padding: 1.5rem 2rem;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    /* Feature List */
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+    }
+
+    .feature-list li {
+      position: relative;
+      padding: 1rem 0 1rem 2rem;
+      border-bottom: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+    }
+
+    .feature-list li:last-child {
+      border-bottom: none;
+    }
+
+    .feature-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 1.35rem;
+      width: 8px;
+      height: 8px;
+      background: var(--gradient-primary);
+      border-radius: 50%;
+    }
+
+    .feature-list li strong {
+      color: var(--color-text);
+    }
+
+    /* Figure */
+    .figure {
+      margin: 2rem 0;
+      background: var(--color-bg-card);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      overflow: hidden;
+    }
+
+    .figure img {
+      width: 100%;
+      border-radius: var(--radius-md);
+    }
+
+    .figure figcaption {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+
+    .figure figcaption strong {
+      color: var(--color-text-secondary);
+    }
+
+    /* Two-column figure */
+    .figure--two-col .figure__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .figure--two-col .figure__grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BIBTEX
+       ═══════════════════════════════════════════════════════════ */
+    .bibtex {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: var(--section-gap) 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .bibtex__title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0 0 1rem;
+      color: var(--color-text);
+    }
+
+    .bibtex__container {
+      position: relative;
+      background: var(--color-bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .bibtex__container pre {
+      margin: 0;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .bibtex__container code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--color-text-secondary);
+    }
+
+    .bibtex__copy {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--color-link);
+      background: rgba(96, 165, 250, 0.1);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .bibtex__copy:hover {
+      background: rgba(96, 165, 250, 0.15);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ */
+    .footer {
+      padding: 3rem 0;
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+    }
+
+    .footer p {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ANIMATIONS
+       ═══════════════════════════════════════════════════════════ */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    /* Selection */
+    ::selection {
+      background: rgba(102, 126, 234, 0.3);
+      color: white;
+    }
+
+    /* MathJax */
+    mjx-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="section section--hero">
+    <div class="hero">
+      <div class="hero__badge">
+        <i class="fa-solid fa-flask"></i>
+        Research Paper
+      </div>
+      
+      <h1 class="hero__title">
+        Dynamics of Reinforcement Learning<br>on the Probability Simplex
+      </h1>
+      
+      <p class="hero__subtitle">
+        A geometric framework for understanding how RL algorithms navigate probability space, 
+        revealing phase transitions and order preservation properties.
+      </p>
+            
+            <div class="authors">
+        <div class="authors__list">
+                <span class="author">Author Name<sup>1</sup></span>
+                <span class="author">Author Name<sup>2</sup></span>
+                <span class="author">Author Name<sup>1,✉</sup></span>
+        </div>
+            </div>
+            
+            <div class="affiliations">
+        <sup>1</sup>Institution One &nbsp;&nbsp; <sup>2</sup>Institution Two
+            </div>
+            
+            <div class="contact">
+        ✉ Corresponding: <a href="mailto:email@example.com">email@example.com</a>
+            </div>
+            
+      <div class="actions">
+        <a href="#" class="btn btn--paper">
+          <i class="fa-solid fa-file-pdf btn__icon"></i>
+          <span>Paper</span>
+        </a>
+        <a href="#" class="btn btn--arxiv">
+          <i class="ai ai-arxiv btn__icon"></i>
+          <span>arXiv</span>
+        </a>
+        <a href="#" class="btn btn--github">
+          <i class="fa-brands fa-github btn__icon"></i>
+          <span>GitHub</span>
+                </a>
+            </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO FIGURE
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="hero-figure">
+    <figure class="hero-figure__container">
+      <img src="./static/images/figure_hero.png" alt="Simplex dynamics visualization">
+                <figcaption>
+                    <strong>(a)</strong> Trajectories on the probability simplex under different judge quality regimes.
+        <strong>(b)</strong> Phase diagram showing transitions between collapse and preservation.
+        <strong>(c)</strong> KL regularization stabilizes dynamics at non-degenerate fixed points.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ABSTRACT
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="abstract">
+            <p>
+                We present a theoretical framework for understanding the dynamics of reinforcement learning algorithms 
+      on the probability simplex. Using tools from differential geometry—particularly the <strong>Shahshahani metric</strong>—we 
+                derive the governing ODEs and SDEs that describe how probability distributions evolve during training. 
+                Our analysis reveals <strong>phase transitions</strong> between regimes of diversity collapse and 
+      preservation, governed by the quality of the reward signal.
+            </p>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAKEAWAYS
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="takeaways">
+    <div class="section-header">
+      <h2 class="section-title">Key Takeaways</h2>
+    </div>
+            
+            <div class="takeaway-grid">
+                <div class="takeaway-card">
+                    <div class="takeaway-number">1</div>
+                    <div class="takeaway-content">
+                        <h3>Simplex Dynamics</h3>
+                        <p>
+                            Reinforcement learning induces natural gradient flows on the probability simplex. 
+            The Shahshahani metric reveals the intrinsic geometry where distances near the boundary diverge logarithmically.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">2</div>
+                    <div class="takeaway-content">
+                        <h3>Phase Transitions</h3>
+                        <p>
+            A critical transition occurs based on judge quality \(J = 1 - \text{FP} - \text{FN}\). 
+            When \(J > 0\), correct convergence; when \(J < 0\), adversarial collapse.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">3</div>
+                    <div class="takeaway-content">
+          <h3>KL Rescue</h3>
+                        <p>
+                            KL divergence regularization can "rescue" learning even under adversarial judge conditions, 
+            preventing complete collapse to incorrect modes.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="takeaway-card">
+                    <div class="takeaway-number">4</div>
+                    <div class="takeaway-content">
+                        <h3>Order Preservation</h3>
+                        <p>
+            Under appropriate conditions, if one response starts more likely than another, 
+            it remains so throughout training—a key stability property.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DYNAMICS SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Dynamics on the Probability Simplex</h2>
+            
+            <p>
+                We study the evolution of probability distributions \(\mathbf{p} = (p_1, \ldots, p_K)\) on the 
+                \(K\)-simplex \(\Delta^{K-1} = \{\mathbf{p} : p_i \geq 0, \sum_i p_i = 1\}\). The gradient flow 
+                under the Shahshahani metric takes the form:
+            </p>
+            
+            <div class="equation">
+                \[
+                \frac{dp_i}{dt} = p_i \left( A_i(\mathbf{p}) - \sum_j p_j A_j(\mathbf{p}) \right)
+                \]
+            </div>
+            
+            <p>
+                where \(A_i(\mathbf{p})\) represents the advantage function for action \(i\). This replicator-like 
+                dynamics naturally preserves the simplex structure while driving probability mass toward 
+                higher-reward actions.
+            </p>
+            
+    <figure class="figure">
+      <img src="./static/images/simplex_trajectories.png" alt="Simplex trajectories">
+                <figcaption>
+                    <strong>Simplex trajectories under different judge quality regimes.</strong>
+        Perfect judge (\(J=1\)) drives rapid convergence to the correct vertex.
+        Noisy judge (\(J=0.3\)) shows slower but still correct convergence.
+        Adversarial judge (\(J<0\)) drives convergence to incorrect vertices.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PHASE DIAGRAM SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Phase Diagram & Critical Transitions</h2>
+            
+            <p>
+                The system exhibits rich phase behavior controlled by the judge quality parameter 
+                \(J = 1 - \text{FP} - \text{FN}\) and the KL regularization strength \(\beta\). 
+            </p>
+            
+    <ul class="feature-list">
+                <li><strong>Correct Convergence (\(J > 0\)):</strong> The system reliably converges to the correct answer with exponential rate.</li>
+                <li><strong>Frozen Dynamics (\(J = 0\)):</strong> At the critical point, the drift vanishes and dynamics become purely diffusive.</li>
+                <li><strong>Adversarial Collapse (\(J < 0\)):</strong> Without regularization, the system converges to incorrect answers.</li>
+      <li><strong>KL Rescue (\(J < 0, \beta > 0\)):</strong> Regularization stabilizes at non-degenerate fixed points.</li>
+            </ul>
+            
+    <figure class="figure">
+      <img src="./static/images/phase_diagram.png" alt="Phase diagram">
+                <figcaption>
+        <strong>Global phase diagram.</strong> The color indicates equilibrium accuracy as a 
+        function of judge quality \(J\) and KL regularization strength \(\beta\). 
+        Sharp transitions occur at critical values.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       GEOMETRY SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Shahshahani Geometry</h2>
+            
+            <p>
+                The natural geometry for probability distributions is given by the <em>Shahshahani metric</em>, 
+                also known as the Fisher-Rao metric:
+            </p>
+            
+            <div class="equation">
+                \[
+                g_{ij}^{\text{Shah}}(\mathbf{p}) = \frac{\delta_{ij}}{p_i}
+                \]
+            </div>
+            
+            <p>
+                This metric has profound implications: small probabilities become "far away" in the geometric 
+                sense, requiring exponentially more gradient signal to change. This explains why RL dynamics 
+      naturally resist probability collapse.
+    </p>
+    
+    <figure class="figure figure--two-col">
+      <div class="figure__grid">
+        <img src="./static/images/shahshahani_metric.png" alt="Shahshahani metric">
+        <img src="./static/images/geodesics.png" alt="Geodesics">
+                </div>
+                <figcaption>
+        <strong>Left:</strong> The Shahshahani metric visualized as ellipses—metric balls become highly elongated near boundaries.
+        <strong>Right:</strong> Geodesics under the Shahshahani metric curve away from the simplex boundary.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ORDER PRESERVATION SECTION
+       ═══════════════════════════════════════════════════════════ -->
+        <section class="content-section">
+    <h2 class="content-section__title">Order Preservation</h2>
+            
+            <p>
+                A fundamental question is whether the dynamics preserve the relative ordering of probabilities. 
+                We prove that under certain conditions, if \(p_i(0) > p_j(0)\), then \(p_i(t) > p_j(t)\) for all 
+                \(t > 0\). This <em>order preservation</em> property has important implications for the 
+                interpretability and stability of learned policies.
+            </p>
+            
+    <figure class="figure">
+      <img src="./static/images/order_preservation.png" alt="Order preservation">
+                <figcaption>
+                    <strong>Order preservation in action.</strong> The probability gaps \(\delta_{ij}(t) = p_i(t) - p_j(t)\) 
+                    maintain their signs throughout training, demonstrating that initial rankings are preserved.
+                </figcaption>
+            </figure>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       BIBTEX
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="bibtex">
+    <h2 class="bibtex__title">Citation</h2>
+    <div class="bibtex__container">
+      <button class="bibtex__copy" onclick="copyBibtex()">
+        <i class="fa-regular fa-copy"></i> Copy
+      </button>
+                <pre><code>@article{author2025simplex,
+    title={Dynamics of Reinforcement Learning on the Probability Simplex},
+    author={Author, First and Author, Second and Author, Third},
+    journal={arXiv preprint arXiv:XXXX.XXXXX},
+    year={2025}
+}</code></pre>
+            </div>
+        </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <p>
+      Template adapted from <a href="https://nerfies.github.io">Nerfies</a>. 
+      Built with care for the research community.
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+        function copyBibtex() {
+  const bibtex = document.querySelector('.bibtex__container code').innerText;
+            navigator.clipboard.writeText(bibtex).then(() => {
+    const btn = document.querySelector('.bibtex__copy');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 2000);
+  });
+}
+
+// Add scroll-triggered animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-in');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.takeaway-card, .content-section, .figure').forEach(el => {
+  el.style.opacity = '0';
+  observer.observe(el);
+});
+    </script>
+
+</body>
+</html>

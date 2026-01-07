@@ -13,7 +13,7 @@
 
 <br>
 
-<img src="docs/static/images/j_sweep.gif" width="700px">
+<img src="docs/static/images/j_sweep.gif" width="400px">
 
 </div>
 
@@ -177,10 +177,6 @@ Training uses a curated subset of 10k high-quality samples from the Open-R1 proj
 ## 💬 FAQ
 
 
-### Q: What happens when J is exactly 0?
-**A:** `J = 0` means the feedback is *uninformative on average* (for example, when `FPR + FNR = 1` under `J = 1 - FPR - FNR`). The expected learning signal cancels out, so training becomes **neutral drift**: parameters move only due to sampling noise and any auxiliary regularizers (e.g., KL/entropy), with **no systematic improvement** beyond initialization.
-
----
 
 ### Q: What if J < 0?
 **A:** `J < 0` is **anti-learning**: You should stop trianing immidielty. The feedback is negatively correlated with correctness. Updates tend to point in the wrong direction and performance can degrade unless you (i) flip the reward/labels, (ii) fix the grader, or (iii) add a stronger trusted signal that dominates the corrupted one.

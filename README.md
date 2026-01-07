@@ -31,20 +31,20 @@
 
 ## 📰 Updates
 
-- **2025/XX** — Paper released on arXiv · [Paper](https://arxiv.org) · [Project Page](https://cognichip.github.io/Noisy-RL/)
-- **2025/XX** — Training code and data released
+- **2026/01** — Paper released on arXiv · [Paper](https://arxiv.org) · [Project Page](https://cognichip.github.io/Noisy-RL/)
+- **2026/01** — Training code released
 
 <br>
 
 ## ❓ The Question
 
-> *Does noisy reward change the **rate** of learning—or its **fate**?*
+> *How sensitive is RL training to the quality of grand truth labels and rewards? Is the performance robust? Or does performance converge to a fraction of the noise-free label as simply as "you get what you pay for /garbage in, garbage out"?*
 
 <br>
 
 ## ⚡ Key Finding
 
-We discover a sharp phase transition in RLVR governed by **Youden's index**:
+We discover a sharp phase transition in RLVR governed by **Youden's index**, as a score of the noise level of the reward:
 
 ```
 J  =  TPR − FPR  =  (1 − FN) − FP
@@ -176,17 +176,54 @@ Training uses a curated subset of 10k high-quality samples from the Open-R1 proj
 
 ## 💬 FAQ
 
-**Q: What happens when J is exactly 0?**
 
-A: The model experiences neutral drift—no net learning signal. Performance remains at initialization level.
+### Q: What happens when J is exactly 0?
+**A:** `J = 0` means the feedback is *uninformative on average* (for example, when `FPR + FNR = 1` under `J = 1 - FPR - FNR`). The expected learning signal cancels out, so training becomes **neutral drift**: parameters move only due to sampling noise and any auxiliary regularizers (e.g., KL/entropy), with **no systematic improvement** beyond initialization.
 
-**Q: Can I use this with other RL algorithms besides GRPO?**
+---
 
-A: The theoretical framework applies broadly to policy gradient methods. The code currently implements GRPO, but the insights transfer.
+### Q: What if J < 0?
+**A:** `J < 0` is **anti-learning**: You should stop trianing immidielty. The feedback is negatively correlated with correctness. Updates tend to point in the wrong direction and performance can degrade unless you (i) flip the reward/labels, (ii) fix the grader, or (iii) add a stronger trusted signal that dominates the corrupted one.
 
-**Q: What's the minimum J needed for practical training?**
+---
 
-A: While any J > 0 theoretically converges, we recommend J ≥ 0.5 for reasonable training speed.
+### Q: Can I use this beyond GRPO?
+**A:** Yes. The key requirement is a **policy-gradient–style correlation** between actions and a noisy training signal (reward/advantage). The role of `J` as an *effective signal factor* carries over to **PPO / REINFORCE / A2C-style on-policy** methods. For off-policy methods, similar effects can appear, but the mapping is less direct because replay and importance sampling also interact with noise.
+
+---
+
+### Q: What is the minimum J for practical training?
+**A:** Any `J > 0` is learnable in principle, but compute can grow rapidly as `J -> 0+`. Two useful rules of thumb:
+
+- **ODE / “speed” view:** learning speed is proportional to `J`  → time-to-progress scales like `~ 1/J`
+- **Finite-batch / SNR view:** to keep gradient SNR roughly constant, you often need `~ 1/J^2` more samples/compute
+
+So if `J ~ 0.5`, training is usually fine; if `J <= 0.1`, expect **very large batches/steps** or prioritize **improving the grader**.
+
+
+---
+
+### Q: How do I estimate J in practice?
+**A:** On a small trusted set (or spot-checked subset), estimate `FPR` and `FNR`, then compute:
+
+- `J = 1 - FPR - FNR`
+
+If ground truth is expensive, approximate via agreement with a stronger grader, majority vote, or consistency checks—just be explicit about what your “truth” proxy is.
+
+---
+
+
+### Q: Does J stay constant during training?
+**A:** Not necessarily. As the policy improves, the output distribution shifts and the grader’s error rates can change (domain shift, harder edge cases, reward hacking). Treat `J` as potentially time-varying (think `J(t)`), and periodically re-estimate or monitor proxies.
+
+---
+
+
+### Q: Does KL regularization “fix” low J?
+**A:** KL helps **stabilize** training and prevent collapse by adding a restoring force toward a reference distribution, but it does **not** create information. If `J ~ 0`, KL can make behavior bounded/predictable while performance stays flat. When `J > 0`, KL can widen the stable regime and improve robustness.
+
+
+
 
 <br>
 

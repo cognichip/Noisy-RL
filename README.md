@@ -211,6 +211,12 @@ A: While any J > 0 theoretically converges, we recommend J ≥ 0.5 for reasonabl
 
 <br>
 
+## 📬 Contact
+
+Questions or feedback? Reach out at [ali@cognichip.ai](mailto:ali@cognichip.ai)
+
+<br>
+
 <div align="center">
 
 Released under the [MIT License](LICENSE)

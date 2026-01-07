@@ -6,7 +6,7 @@
 
 <br>
 
-[![arXiv](https://img.shields.io/badge/arXiv-2025.xxxxx-b31b1b.svg?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org)
+[![arXiv](https://img.shields.io/badge/arXiv-2026.xxxxx-b31b1b.svg?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue?style=for-the-badge&logo=semanticweb&logoColor=white)](https://cognichip.github.io/Noisy-RL/)
 [![Hugging Face](https://img.shields.io/badge/Data-HuggingFace-fcd022?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)

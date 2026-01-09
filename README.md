@@ -6,7 +6,7 @@
 
 <br>
 
-[![arXiv](https://img.shields.io/badge/arXiv-2026.xxxxx-b31b1b.svg?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org)
+[![arXiv](https://img.shields.io/badge/arXiv-2601.04411-b31b1b.svg?style=for-the-badge&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2601.04411)
 [![Project Page](https://img.shields.io/badge/Project-Page-blue?style=for-the-badge&logo=semanticweb&logoColor=white)](https://cognichip.github.io/Noisy-RL/)
 [![Hugging Face](https://img.shields.io/badge/Data-HuggingFace-fcd022?style=for-the-badge&logo=huggingface&logoColor=000)](https://huggingface.co/datasets/open-r1/verifiable-coding-problems-python)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
@@ -31,7 +31,7 @@
 
 ## 📰 Updates
 
-- **2026/01** — Paper released on arXiv · [Paper](https://arxiv.org) · [Project Page](https://cognichip.github.io/Noisy-RL/)
+- **2026/01** — Paper released on arXiv · [Paper](https://arxiv.org/abs/2601.04411) · [Project Page](https://cognichip.github.io/Noisy-RL/)
 - **2026/01** — Training code released
 
 <br>
@@ -236,9 +236,9 @@ If ground truth is expensive, approximate via agreement with a stronger grader, 
 @article{rlver2025,
     title   = {Rate or Fate? RLVeR: Reinforcement Learning
                with Verifiable Noisy Rewards},
-    author  = {Anonymous},
+    author  = {A. Rad et al.},
     journal = {arXiv preprint},
-    year    = {2025}
+    year    = {2026}
 }
 ```
 

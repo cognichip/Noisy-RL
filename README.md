@@ -13,7 +13,7 @@
 
 <br>
 
-<img src="docs/static/images/j_sweep.gif" width="400px">
+<img src="docs/static/images/j_sweep_2.gif" width="500px">
 
 </div>
 

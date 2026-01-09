@@ -1201,7 +1201,7 @@
             
             <div class="equation">
                 \[
-      \frac{dp}{dt} =- p^{3/2}(1-p)^{3/2} \cdot J 
+      \frac{dp}{dt} =- \eta J \cdot p^{3/2}(1-p)^{3/2}
                 \]
             </div>
             
@@ -1265,6 +1265,42 @@
                 </figcaption>
             </figure>
         </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DIVERSITY COLLAPSE SECTION
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="content-section">
+    <h2 class="content-section__title">Diversity Collapse Among Good Arms</h2>
+    
+    <p>
+      Even when \(J > 0\) and learning succeeds, GRPO exhibits <strong>winner-take-all</strong> dynamics 
+      among correct reasoning modes. The separatrices—basin boundaries shown as dashed lines—divide the 
+      simplex into regions of attraction. Whichever good mode has a slight initial advantage captures 
+      all the probability mass.
+    </p>
+    
+    <p>
+      This is a feature, not a bug: GRPO amplifies small fitness differences into decisive outcomes. 
+      But it also means that <em>diversity among correct solutions collapses</em>—the model converges 
+      to a single "winning" strategy even when multiple valid approaches exist.
+    </p>
+
+    <figure class="animation-figure animation-figure--glow">
+      <img src="./static/images/separatrices_glow.gif" alt="Separatrices and basin structure">
+      <figcaption>
+        <strong>Basin boundaries determine the winner.</strong>
+        The glowing dashed lines are separatrices—trajectories starting in different regions 
+        converge to different vertices. Initial conditions determine which good arm dominates.
+      </figcaption>
+    </figure>
+    
+    <p>
+      This winner-take-all behavior is governed by the <em>inner dynamics</em> on the good-arm subspace. 
+      The competition follows replicator dynamics where fitness is proportional to probability, 
+      creating a rich-get-richer effect that eliminates diversity over time.
+    </p>
+  </section>
 
 
   <!-- ═══════════════════════════════════════════════════════════
